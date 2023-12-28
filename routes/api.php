@@ -2,6 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DishController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\NutrientCalculationController;
+use App\Http\Controllers\TechnologicalCardController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +22,19 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::apiResource(
+    'dishes',
+    DishController::class
+);
+
+Route::apiResource(
+    'products',
+    ProductController::class
+);
+
+Route::post('/calculate-nutrients', [NutrientCalculationController::class, 'calculate']);
+
+// generate-technological-card
+
+Route::post('/generate-technological-card', [TechnologicalCardController::class, 'generate']);
