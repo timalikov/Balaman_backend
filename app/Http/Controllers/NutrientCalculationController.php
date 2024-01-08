@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\NutrientCalculationService;
 use Illuminate\Http\Request;
 
+
 class NutrientCalculationController extends Controller
 {
     protected $nutrientCalculationService;
@@ -25,6 +26,7 @@ class NutrientCalculationController extends Controller
         }
 
         // Calculate macronutrients and micronutrients
+        
         $macroNutrients = $this->nutrientCalculationService->calculateMacronutrients($products);
         $microNutrients = $this->nutrientCalculationService->calculateMicronutrients($products);
 

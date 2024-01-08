@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBiginteger('micro_id');
             $table->unsignedBiginteger('product_category_id');
             $table->unsignedBiginteger('factor_id');
-            $table->float('coefficient', 8, 2)->nullable();
+            $table->float('coefficient', 8, 2);
 
             $table->foreign('micro_id')->references('micro_id')->on('micros')->onDelete('cascade');
             $table->foreign('product_category_id')->references('category_id')->on('product_categories')->onDelete('cascade');

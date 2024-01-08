@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Factor;
 
 class FactorController extends Controller
 {
@@ -12,7 +13,9 @@ class FactorController extends Controller
     public function index()
     {
         //
-        $factors = Factor::all();
+        // $factors = Factor::all();
+
+        $factors = Factor::select('factor_id', 'name')->get();
 
         return response()->json($factors);
 

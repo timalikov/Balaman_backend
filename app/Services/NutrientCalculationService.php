@@ -8,6 +8,7 @@ use App\Models\Product;
 
 class NutrientCalculationService
 {
+
     public function calculateMacronutrients($products)
     {
         $totals = [
@@ -37,8 +38,7 @@ class NutrientCalculationService
 
     }
     
-    public function calculateMicronutrients($products)
-    {
+    public function calculateMicronutrients($products){
 
         $totals = [];
 
@@ -118,6 +118,17 @@ class NutrientCalculationService
 
 
         // return $totals;
+    }
+
+    public function processProducts(array $products): array
+    {
+        foreach ($products as &$product) {
+            // Apply your logic here
+            // Example: Adding a new field
+            $product['processed'] = true;
+        }
+
+        return $products;
     }
 
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\ProductCategory;
 
 class ProductController extends Controller
 {
@@ -14,30 +15,54 @@ class ProductController extends Controller
     {
         // Validate the request
         $request->validate([
-            'product_name_filter' => 'string|nullable',
-            'category_id_filter' => 'integer|nullable',
+            'search' => 'string|nullable',
+            'product_id' => 'integer|nullable',
+            'category_id' => 'integer|nullable',
+            'per_page' => 'integer|nullable'
         ]);
 
-        $query = Product::query();
-
-        $query = Product::with('productCategory:name') 
-        ->select(["product_id", 'name', 'description', 'product_category_id', 'price', 'protein', 'fat', 'carbohydrate', 'fiber', 'kilocaries']);
-
-
-        // Filter by name
-        if ($request->has('product_name_filter')) {
-            $query->where('name', 'like', '%' . $request->input('product_name_filter') . '%');
+        // Check for specific product ID search
+        if ($request->has('product_id')) {
+            // call the show function in this class
+            return $this->show($request->input('product_id'));
         }
 
-        // Filter by category
-        if ($request->has('category_id_filter')) {
-            $query->where('product_category_id', $request->input('category_id_filter'));
+        // Continue with the regular search and filtering
+        $query = Product::with(['productCategory' => function($query) {
+                $query->select('category_id', 'name');
+            }])
+            ->select(["product_id", 'name', 'description', 'product_category_id']);
+
+
+        // Handle the general search parameter
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->orWhereHas('productCategory', function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%');
+                });
+            });
         }
 
-        $products = $query->get();
+        // Filter by category_id if provided
+        if ($request->has('category_id')) {
+            $query->whereHas('productCategory', function ($q) use ($request) {
+                $q->where('category_id', $request->input('category_id'));
+            });
+        }
+
+        // Determine the number of products per page
+        $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+
+        // Get the results with pagination
+        $products = $query->paginate($perPage);
 
         return response()->json($products);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -61,13 +86,13 @@ class ProductController extends Controller
             'product_category_id' => 'required|integer',
             'product_category_code' => 'nullable|string|max:255',
             'price' => 'required|numeric',
-            'protein' => 'nullable|numeric',
-            'fat' => 'nullable|numeric',
-            'carbohydrate' => 'nullable|numeric',
+            'protein' => 'required|numeric',
+            'fat' => 'required|numeric',
+            'carbohydrate' => 'required|numeric',
             'fiber' => 'nullable|numeric',
             'total_sugar' => 'nullable|numeric',
             'saturated_fat' => 'nullable|numeric',
-            'kilocaries' => 'nullable|numeric',
+            'kilocaries' => 'required|numeric',
             'kilocaries_with_fiber' => 'nullable|numeric',
             'image_url' => 'nullable|url',
             'is_seasonal' => 'nullable|boolean',
@@ -85,11 +110,31 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        //
-        $product = Product::with('micros')->findOrFail($id);
-
+        // Fetch the product by its ID along with related data
+        $product = Product::with([
+            // Include the micronutrients ('micros') associated with the product
+            'micros' => function ($query) {
+                // Ensure to fetch the weight from the pivot table for each micronutrient
+                $query->withPivot('weight');
+            }, 
+    
+            // Include the product's category
+            'productCategory' => function ($query) {
+                // Select only the necessary fields from the productCategory table
+                // Adjust the field names if they are different in your database
+                $query->select('category_id', 'name');
+            }
+        ])
+        // Filter the product by its unique ID
+        ->where('product_id', $id)
+        // Fetch the first product that matches the criteria or fail
+        ->firstOrFail();
+    
+        // Return the product data as a JSON response
         return response()->json($product);
     }
+    
+
 
     /**
      * Show the form for editing the specified resource.

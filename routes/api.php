@@ -6,6 +6,9 @@ use App\Http\Controllers\DishController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\NutrientCalculationController;
 use App\Http\Controllers\TechnologicalCardController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FactorController;
+use App\Http\Controllers\WeightCalculationController;
 
 
 /*
@@ -23,6 +26,21 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::group(
+    [
+        'middleware' => 'api',
+        'prefix' => 'auth'
+    ],
+    function ($router) {
+        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/profile', [AuthController::class, 'profile']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
+       
+    }
+);
+
 Route::apiResource(
     'dishes',
     DishController::class
@@ -33,8 +51,14 @@ Route::apiResource(
     ProductController::class
 );
 
+Route::apiResource(
+    'factors',
+    FactorController::class
+);
+
 Route::post('/calculate-nutrients', [NutrientCalculationController::class, 'calculate']);
 
 // generate-technological-card
-
 Route::post('/generate-technological-card', [TechnologicalCardController::class, 'generate']);
+
+Route::post('/calculate-weight', [WeightCalculationController::class, 'process']);
