@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "Starting  .sh"
 
 if [ ! -f "vendor/autoload.php" ]; then
     echo "Installing dependencies"

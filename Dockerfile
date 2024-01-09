@@ -79,9 +79,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
 # ENV PATH=${PATH}:/home/www-data/.composer/vendor/bin
 
 WORKDIR /var/www
+
 COPY . .
 
+RUN chmod +x /var/www/entrypoint.sh
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+
 
 
 FROM php-base
@@ -107,4 +112,7 @@ WORKDIR /var/www
 # USER www-data
 
 ENV PORT=8000
-ENTRYPOINT ["docker/entrypoint.sh"]
+ENV APP_ENV=development
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php"]

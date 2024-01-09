@@ -45,7 +45,7 @@ return new class extends Migration
 
             $table->foreign('product_category_id')->references('category_id')->on('product_categories');
             $table->foreign('product_subcategory_id')->references('subcategory_id')->on('product_subcategories');
-            $table->foreign('product_subsubcategory_id')->references('subsubcategory_id')->on('product_subsubcategories');
+            $table->foreign('product_subsubcategory_id')->references('sub_subcategory_id')->on('product_sub_subcategories');
         });
     }
 
