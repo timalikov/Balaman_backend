@@ -34,8 +34,8 @@ return new class extends Migration
             $table->float('fiber')->nullable();
             $table->float('total_sugar')->nullable();
             $table->float('saturated_fat')->nullable();
-            $table->float('kilocaries');
-            $table->float('kilocaries_with_fiber')->nullable();
+            $table->float('kilocalories');
+            $table->float('kilocalories_with_fiber')->nullable();
 
 
             $table->timestamps();
