@@ -19,7 +19,7 @@ return new class extends Migration
     
 
             //product category
-            $table->unsignedBigInteger('product_category_id');
+            $table->unsignedBigInteger('product_category_id')->nullable();
             $table->string('product_category_code')->nullable();
             $table->unsignedBigInteger('product_subcategory_id')->nullable();
             $table->unsignedBigInteger('product_subsubcategory_id')->nullable();
