@@ -114,5 +114,4 @@ WORKDIR /var/www
 ENV PORT=8000
 ENV APP_ENV=development
 
-ENTRYPOINT ["entrypoint.sh"]
-CMD ["php"]
+ENTRYPOINT ["docker/entrypoint.sh"]
