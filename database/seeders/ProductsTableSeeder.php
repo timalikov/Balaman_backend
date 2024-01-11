@@ -14,30 +14,29 @@ class ProductsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Load the CSV document from a file path
-        $csv = Reader::createFromPath(storage_path('app/db-seeds/products.csv'), 'r');
-        $csv->setHeaderOffset(0); //set the CSV header offset
+        DB::table('products')->truncate(); // Clear the table
 
-        $records = $csv->getRecords(); //get all the records
+        // Load the CSV document from a file path
+        $csv = Reader::createFromPath(storage_path('app/database-data/products.csv'), 'r');
+        $csv->setHeaderOffset(0); // Set the CSV header offset
+
+        $records = $csv->getRecords(); // Get all the records
 
         foreach ($records as $record) {
             DB::table('products')->insert([
-                'bls_code'                     => $record['bls_code'],
-                'name'                         => $record['name'],
-                'description'                  => $record['description'],
-                'product_category_id'          => $record['product_category_id'],
-                'product_category_code'        => $record['product_category_code'],
-                'product_subcategory_id'       => $record['product_subcategory_id'],
-                'product_subsubcategory_id'    => $record['product_subsubcategory_id'],
-                'price'                        => $record['price'],
-                'protein'                      => $record['protein'],
-                'fat'                          => $record['fat'],
-                'carbohydrate'                 => $record['carbohydrate'],
-                'fiber'                        => $record['fiber'],
-                'total_sugar'                  => $record['total_sugar'],
-                'saturated_fat'                => $record['saturated_fat'],
-                'kilocaries'                   => $record['kilocaries'],
-                'kilocaries_with_fiber'        => $record['kilocaries_with_fiber']
+                'bls_code' => $record['bls_code'],
+                'name' => $record['name'],
+                'product_category_id' => $record['product_category_id'] !== '' ? $record['product_category_id'] : null,
+                'product_category_code' => $record['product_category_code'] !== '' ? $record['product_category_code'] : null,
+                'price' => $record['price'] !== '' ? $record['price'] : null,
+                'protein' => $record['protein'] !== '' ? $record['protein'] : null,
+                'fat' => $record['fat'] !== '' ? $record['fat'] : null,
+                'carbohydrate' => $record['carbohydrate'] !== '' ? $record['carbohydrate'] : null,
+                'fiber' => $record['fiber'] !== '' ? $record['fiber'] : null,
+                'total_sugar' => $record['total_sugar'] !== '' ? $record['total_sugar'] : null,
+                'saturated_fat' => $record['saturated_fat'] !== '' ? $record['saturated_fat'] : null,
+                'kilocalories' => $record['kilocalories'] !== '' ? $record['kilocalories'] : null,
+                'kilocalories_with_fiber' => $record['kilocalories_with_fiber'] !== '' ? $record['kilocalories_with_fiber'] : null,
             ]);
         }
     }

@@ -18,7 +18,8 @@ class ProductController extends Controller
             'search' => 'string|nullable',
             'product_id' => 'integer|nullable',
             'category_id' => 'integer|nullable',
-            'per_page' => 'integer|nullable'
+            'per_page' => 'integer|nullable',
+            'page' => 'integer|nullable' // Add validation for 'page'
         ]);
 
         // Check for specific product ID search
@@ -54,13 +55,29 @@ class ProductController extends Controller
             });
         }
 
+        // // Determine the number of products per page
+        // $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+
+        // // Get the results with pagination
+        // $products = $query->paginate($perPage);
+
+        // return response()->json($products);
+
         // Determine the number of products per page
         $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+        $currentPage = $request->input('page', 1); // Default to 1 if not provided
 
         // Get the results with pagination
-        $products = $query->paginate($perPage);
+        $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-        return response()->json($products);
+        // Optional: Customize the response format
+        return response()->json([
+            'current_page' => $products->currentPage(),
+            'items_per_page' => $products->perPage(),
+            'total_items' => $products->total(),
+            'total_pages' => $products->lastPage(),
+            'data' => $products->items()
+        ]);
     }
 
 

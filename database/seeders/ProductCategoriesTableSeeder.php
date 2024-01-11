@@ -40,10 +40,13 @@ class ProductCategoriesTableSeeder extends Seeder
         ];
 
         foreach ($categories as $name => $code) {
-            DB::table('product_categories')->insert([
-                'name' => $name,
-                'code' => $code
-            ]);
+            if (DB::table('product_categories')->where('code', $code)->doesntExist()) {
+                DB::table('product_categories')->insert([
+                    'name' => $name,
+                    'code' => $code
+                ]);
+            }
+            
         }
     }
 }
