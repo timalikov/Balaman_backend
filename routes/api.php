@@ -9,6 +9,7 @@ use App\Http\Controllers\TechnologicalCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FactorController;
 use App\Http\Controllers\WeightCalculationController;
+use App\Http\Controllers\MicroController;
 
 
 /*
@@ -49,6 +50,11 @@ Route::apiResource(
 Route::apiResource(
     'products',
     ProductController::class
+);
+
+Route::apiResource(
+    'micros',
+    MicroController::class
 );
 
 Route::apiResource(

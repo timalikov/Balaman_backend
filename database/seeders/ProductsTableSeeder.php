@@ -17,7 +17,7 @@ class ProductsTableSeeder extends Seeder
         DB::table('products')->truncate(); // Clear the table
 
         // Load the CSV document from a file path
-        $csv = Reader::createFromPath(storage_path('app/database-data/products.csv'), 'r');
+        $csv = Reader::createFromPath(storage_path('app/database-data/products_upd.csv'), 'r');
         $csv->setHeaderOffset(0); // Set the CSV header offset
 
         $records = $csv->getRecords(); // Get all the records
@@ -27,7 +27,7 @@ class ProductsTableSeeder extends Seeder
                 'bls_code' => $record['bls_code'],
                 'name' => $record['name'],
                 'product_category_id' => $record['product_category_id'] !== '' ? $record['product_category_id'] : null,
-                'product_category_code' => $record['product_category_code'] !== '' ? $record['product_category_code'] : null,
+                // 'product_category_code' => $record['product_category_code'] !== '' ? $record['product_category_code'] : null,
                 'price' => $record['price'] !== '' ? $record['price'] : null,
                 'protein' => $record['protein'] !== '' ? $record['protein'] : null,
                 'fat' => $record['fat'] !== '' ? $record['fat'] : null,

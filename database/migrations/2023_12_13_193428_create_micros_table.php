@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('micros', function (Blueprint $table) {
             $table->id('micro_id'); 
             $table->string('name');
-            $table->string('code')->unique();
+            $table->string('code')->unique()->nullable();
             $table->timestamps();
         });
     }
