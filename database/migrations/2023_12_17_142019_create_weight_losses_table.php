@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('macros_losses', function (Blueprint $table) {
+        Schema::create('weight_losses', function (Blueprint $table) {
             $table->id();
             $table->unsignedBiginteger('product_id');
             $table->unsignedBiginteger('factor_id');
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('macros_losses');
+        Schema::dropIfExists('weight_losses');
     }
 };
