@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('micros_loss_by_categories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBiginteger('micro_id');
             $table->unsignedBiginteger('product_category_id');
             $table->unsignedBiginteger('factor_id');
+            $table->unsignedBiginteger('micro_id');
             $table->float('coefficient', 8, 2);
 
             $table->foreign('micro_id')->references('micro_id')->on('micros')->onDelete('cascade');

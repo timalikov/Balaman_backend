@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             MicrosSeeder::class,
             MicrosProductsTableSeeder::class,
             FactorsTableSeeder::class,
+            WeightLossesTableSeeder::class,
         ]);
     
                
