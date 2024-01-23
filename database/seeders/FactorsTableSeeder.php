@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FactorsTableSeeder extends Seeder
 {
@@ -14,6 +15,14 @@ class FactorsTableSeeder extends Seeder
      */
     public function run()
     {
+        // Disable foreign key checks to avoid constraint violations
+        Schema::disableForeignKeyConstraints();
+        // Truncate the table
+        DB::table('factors')->truncate();
+        // Enable foreign key checks
+        Schema::enableForeignKeyConstraints();
+
+
         $factors = [
             ['name' => 'Холодная обработка'],
             ['name' => 'Жарка на сковороде с небольшим количеством масла'],

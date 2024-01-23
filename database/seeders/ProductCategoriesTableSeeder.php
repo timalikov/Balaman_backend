@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ProductCategoriesTableSeeder extends Seeder
 {
@@ -13,6 +14,12 @@ class ProductCategoriesTableSeeder extends Seeder
      */
     public function run(): void
     {
+        // Disable foreign key checks to avoid constraint violations
+        Schema::disableForeignKeyConstraints();
+        // Truncate the table
+        DB::table('product_categories')->truncate();
+        // Enable foreign key checks
+        Schema::enableForeignKeyConstraints();
 
         $categories = [
             "Соки",

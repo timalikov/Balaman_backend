@@ -4,13 +4,22 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Reader;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MicrosProductsTableSeeder extends Seeder
 {
     public function run()
     {
+        // Disable foreign key checks to avoid constraint violations
+        Schema::disableForeignKeyConstraints();
+        // Truncate the table
+        DB::table('micros_products')->truncate();
+        // Enable foreign key checks
+        Schema::enableForeignKeyConstraints();
+
         for ($productId = 1; $productId <= 696; $productId++) {
-            $filePath = storage_path("app/database-data/micros/csv_data/$productId.csv");
+            $filePath = storage_path("app/database_data/micros/csv_data/$productId.csv");
 
             if (!file_exists($filePath)) {
                 continue;  // Skip if file does not exist
@@ -27,7 +36,7 @@ class MicrosProductsTableSeeder extends Seeder
 
                 DB::table('micros_products')->insert([
                     'micro_id' => $record['micro_id'],
-                    'product_id' => $productId,  // Assuming each CSV file corresponds to a unique product_id
+                    'product_id' => $record['product_id'], 
                     'weight' => $record['weight'],
                 ]);
             }

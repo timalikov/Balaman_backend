@@ -8,7 +8,7 @@ use League\Csv\Reader;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
-class WeightLossesTableSeeder extends Seeder
+class MicrosLossesByCategoriesTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -20,26 +20,26 @@ class WeightLossesTableSeeder extends Seeder
         // Disable foreign key checks to avoid constraint violations
         Schema::disableForeignKeyConstraints();
         // Truncate the table
-        DB::table('weight_losses')->truncate();
+        DB::table('micros_losses_by_categories')->truncate();
         // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
-        $csvDirectory = storage_path('app/database_data/factors/csv_data');
+        $csvDirectory = storage_path('app/database_data/micros_losses/csv_data');
         $csvFiles = glob($csvDirectory . '/*.csv');
 
         $insertedRecords = [];
         $rejectedRecords = [];
 
         foreach ($csvFiles as $csvFile) {
-
             $csv = Reader::createFromPath($csvFile, 'r');
             $csv->setHeaderOffset(0);
 
             foreach ($csv->getRecords() as $record) {
                 if ($this->isValidNumber($record['coefficient'])) {
-                    DB::table('weight_losses')->insert([
-                        'product_id'  => $record['product_id'],
+                    DB::table('micros_losses_by_categories')->insert([
+                        'product_category_id'  => $record['product_category_id'],
                         'factor_id'   => $record['factor_id'],
+                        'micro_id' => $record['micro_id'],
                         'coefficient' => $record['coefficient'],
                         'created_at'  => now(),
                     ]);

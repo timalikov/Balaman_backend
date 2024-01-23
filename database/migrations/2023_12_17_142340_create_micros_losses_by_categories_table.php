@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('micros_loss_by_categories', function (Blueprint $table) {
+        Schema::create('micros_losses_by_categories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBiginteger('product_category_id');
             $table->unsignedBiginteger('factor_id');

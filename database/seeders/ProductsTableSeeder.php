@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Reader;
+use Illuminate\Support\Facades\Schema;
 
 class ProductsTableSeeder extends Seeder
 {
@@ -14,10 +15,16 @@ class ProductsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('products')->truncate(); // Clear the table
+        // Disable foreign key checks to avoid constraint violations
+        Schema::disableForeignKeyConstraints();
+        // Truncate the table
+        DB::table('products')->truncate(); 
+        // Enable foreign key checks
+        Schema::enableForeignKeyConstraints();
+        
 
         // Load the CSV document from a file path
-        $csv = Reader::createFromPath(storage_path('app/database-data/products_upd.csv'), 'r');
+        $csv = Reader::createFromPath(storage_path('app/database_data/products_upd.csv'), 'r');
         $csv->setHeaderOffset(0); // Set the CSV header offset
 
         $records = $csv->getRecords(); // Get all the records

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MicrosSeeder extends Seeder
 {
@@ -13,6 +14,14 @@ class MicrosSeeder extends Seeder
      */
     public function run(): void
     {
+        // Disable foreign key checks to avoid constraint violations
+        Schema::disableForeignKeyConstraints();
+        // Truncate the table
+        DB::table('micros')->truncate();
+        // Enable foreign key checks
+        Schema::enableForeignKeyConstraints();
+
+
         $micros = [
             "TFA, трансжирные кислоты",
             "Аланин",
