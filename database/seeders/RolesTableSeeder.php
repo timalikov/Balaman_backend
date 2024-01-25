@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role; 
 
 class RolesTableSeeder extends Seeder
 {
@@ -21,26 +22,9 @@ class RolesTableSeeder extends Seeder
         // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
-        $roles = [
-            [
-                'name' => 'ROLE_USER',
-            ],
-            [
-                'name' => 'ROLE_ADMIN',
-            ],
-            [
-                'name' => 'ROLE_NUTRITIONIST',
-            ],
-            [
-                'name' => 'ROLE_SCHOOL',
-            ],
-        ];
+        $adminRole = Role::create(['name' => 'admin']);
+        $userRole = Role::create(['name' => 'user']);
 
-        foreach ($roles as $role) {
-            DB::table('roles')->insert([
-                'name' => $role['name'],
-                'created_at' => now(),
-            ]);
-        }
+        $adminRole->givePermissionTo('all');
     }
 }

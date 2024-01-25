@@ -9,11 +9,12 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 
 class User extends Authenticatable implements JWTSubject 
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -24,12 +25,17 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'role_id',
     ];
 
-    public function role() {
-        return $this->belongsTo(Role::class, 'role_id');
-    }
+    // public function roles()
+    // {
+    //     return $this->belongsToMany(Role::class);
+    // }
+
+    // public function permissions()
+    // {
+    //     return $this->belongsToMany(Permission::class);
+    // }
     
     /**
      * The attributes that should be hidden for serialization.

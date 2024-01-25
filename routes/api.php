@@ -12,6 +12,7 @@ use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\MicroController;
 
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -42,15 +43,28 @@ Route::group(
     }
 );
 
+// Public routes
+Route::get('/products', [ProductController::class, 'index']); // List all products
+Route::middleware('role:admin')->get('/products/{product}', [ProductController::class, 'show']); // Show a single product
+// ... other routes
+
+// Protected routes
+Route::middleware('role:admin')->post('/products', [ProductController::class, 'store']);
+
+// Route::post('/products', [ProductController::class, 'store'])->middleware('api','checkRolePermission:create');
+Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('jwt.verify', 'checkRolePermission:update');
+Route::delete('/products/{product}', [ProductController::class, 'delete'])->middleware('jwt.verify', 'checkRolePermission:delete');
+
+// Route::apiResource(
+//     'products',
+//     ProductController::class
+// );
+
 Route::apiResource(
     'dishes',
     DishController::class
 );
 
-Route::apiResource(
-    'products',
-    ProductController::class
-);
 
 Route::apiResource(
     'micros',

@@ -31,7 +31,7 @@ class AuthController extends Controller
             'name' => 'required',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|confirmed|min:6',
-            'role_id' => 'sometimes|exists:roles,role_id' // Validate role_id
+            'role_name' => 'sometimes|string' 
         ]);
     
         if ($validator->fails()) {
@@ -47,8 +47,11 @@ class AuthController extends Controller
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
             'password' => bcrypt($validatedData['password']),
-            'role_id' => $validatedData['role_id'] ?? 1, // Use role_id from validated data
         ]);
+
+        // Assign default role if not provided or use the provided role
+        $roleName = $request->input('role_name', 'user');
+        $user->assignRole($roleName);
     
         return response()->json([
             'message' => 'User successfully registered',
@@ -78,7 +81,11 @@ class AuthController extends Controller
 
     public function createNewToken($token){
         $user = auth()->user();
-        $customClaims = ['role' => $user->role_id]; // Add custom claims with user role
+        $role = $user->getRoleNames()->first();
+
+        // Add custom claims with user role
+        $customClaims = ['role' => $role];
+        
         $customToken = auth()->claims($customClaims)->login($user);
     
         return response()->json([
