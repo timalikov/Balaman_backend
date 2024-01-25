@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             FactorsTableSeeder::class,
             WeightLossesTableSeeder::class,
             MicrosLossesByCategoriesTableSeeder::class,
+            RolesTableSeeder::class,
         ]);
     
                

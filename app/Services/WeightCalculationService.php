@@ -19,19 +19,20 @@ class WeightCalculationService
             $productData['protein'] *= $weightCoefficient;
             $productData['fat'] *= $weightCoefficient;
             $productData['carbohydrate'] *= $weightCoefficient;
-            $productData['kilocaries'] *= $weightCoefficient;
+            $productData['kilocalories'] *= $weightCoefficient;
             $productData['fiber'] *= $weightCoefficient;
             $productData['total_sugar'] *= $weightCoefficient;
             $productData['saturated_fat'] *= $weightCoefficient;
-            $productData['kilocaries_with_fiber'] *= $weightCoefficient;
+            $productData['kilocalories_with_fiber'] *= $weightCoefficient;
 
     
-            // Apply the coefficient to each micronutrient in micros array
+            // Apply the coefficient to the weight of each micronutrient in the micros array
             foreach ($productData['micros'] as &$micro) {
-                if (isset($micro['amount']) && is_numeric($micro['amount'])) {
-                    $micro['amount'] *= $weightCoefficient;
+                if (isset($micro['pivot']['weight']) && is_numeric($micro['pivot']['weight'])) {
+                    $micro['pivot']['weight'] *= $weightCoefficient;
                 }
             }
+            
 
         }
     

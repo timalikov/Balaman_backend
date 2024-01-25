@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use App\Models\Role;
+
 
 class User extends Authenticatable implements JWTSubject 
 {
@@ -22,8 +24,13 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
+    public function role() {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+    
     /**
      * The attributes that should be hidden for serialization.
      *

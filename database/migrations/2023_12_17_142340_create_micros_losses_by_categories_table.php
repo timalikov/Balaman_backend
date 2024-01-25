@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('micros_loss_by_categories');
+        Schema::dropIfExists('micros_losses_by_categories');
     }
 };

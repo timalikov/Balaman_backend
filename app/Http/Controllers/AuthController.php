@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use Auth;
 use Validator;
 use App\Models\User;
+use App\Models\Role;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash; 
+use Illuminate\Support\Facades\Route;
 
 class AuthController extends Controller
 {
@@ -22,26 +26,30 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function register (Request $request) {
-
+    public function register(Request $request) {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|confirmed|min:6',
+            'role_id' => 'sometimes|exists:roles,role_id' // Validate role_id
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()->toJson()
+                'errors' => $validator->errors()
             ], 400);
         }
-
-        $user = User::create(array_merge(
-            $validator->validated(),
-            ['password' => bcrypt($request->password)]
-        ));
-
+    
+        $validatedData = $validator->validated();
+    
+        $user = User::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => bcrypt($validatedData['password']),
+            'role_id' => $validatedData['role_id'] ?? 1, // Use role_id from validated data
+        ]);
+    
         return response()->json([
             'message' => 'User successfully registered',
             'user' => $user
@@ -69,13 +77,18 @@ class AuthController extends Controller
     }
 
     public function createNewToken($token){
+        $user = auth()->user();
+        $customClaims = ['role' => $user->role_id]; // Add custom claims with user role
+        $customToken = auth()->claims($customClaims)->login($user);
+    
         return response()->json([
-            'access_token' => $token,
+            'access_token' => $customToken,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL()*60,
-            'user' => auth()->user()
+            'expires_in' => auth()->factory()->getTTL() * 60,
+            'user' => $user
         ]);
     }
+    
 
     public function profile(){
         return response()->json(auth()->user());
