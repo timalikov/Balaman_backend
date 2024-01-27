@@ -17,7 +17,7 @@ class ProductController extends Controller
         $request->validate([
             'search' => 'string|nullable',
             'product_id' => 'integer|nullable',
-            'category_id' => 'integer|nullable',
+            'product_category_id' => 'integer|nullable',
             'per_page' => 'integer|nullable',
             'page' => 'integer|nullable' // Add validation for 'page'
         ]);
@@ -30,7 +30,7 @@ class ProductController extends Controller
 
         // Continue with the regular search and filtering
         $query = Product::with(['productCategory' => function($query) {
-                $query->select('category_id', 'name');
+                $query->select('product_category_id', 'name');
             }])
             ->select(["product_id", 'name', 'description', 'product_category_id']);
 
@@ -48,10 +48,10 @@ class ProductController extends Controller
             });
         }
 
-        // Filter by category_id if provided
-        if ($request->has('category_id')) {
+        // Filter by product_category_id if provided
+        if ($request->has('product_category_id')) {
             $query->whereHas('productCategory', function ($q) use ($request) {
-                $q->where('category_id', $request->input('category_id'));
+                $q->where('product_category_id', $request->input('product_category_id'));
             });
         }
 
@@ -129,9 +129,9 @@ class ProductController extends Controller
     {
         // Fetch the product by its ID along with related data
         $product = Product::with([
-            // Include the micronutrients ('micros') associated with the product
-            'micros' => function ($query) {
-                // Ensure to fetch the weight from the pivot table for each micronutrient
+            // Include the micronutrients ('nutrients') associated with the product
+            'nutrients' => function ($query) {
+                // Ensure to fetch the weight from the pivot table for each nutrient
                 $query->withPivot('weight');
             }, 
     
@@ -139,7 +139,7 @@ class ProductController extends Controller
             'productCategory' => function ($query) {
                 // Select only the necessary fields from the productCategory table
                 // Adjust the field names if they are different in your database
-                $query->select('category_id', 'name');
+                $query->select('product_category_id', 'name');
             }
         ])
         // Filter the product by its unique ID

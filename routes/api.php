@@ -9,7 +9,7 @@ use App\Http\Controllers\TechnologicalCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FactorController;
 use App\Http\Controllers\WeightCalculationController;
-use App\Http\Controllers\MicroController;
+use App\Http\Controllers\NutrientController;
 
 
 
@@ -67,8 +67,8 @@ Route::apiResource(
 
 
 Route::apiResource(
-    'micros',
-    MicroController::class
+    'nutrients',
+    NutrientController::class
 );
 
 Route::apiResource(

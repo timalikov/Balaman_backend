@@ -14,7 +14,7 @@ class Factor extends Model
     protected $fillable = ['name'];
 
     public function products() {
-    return $this->belongsToMany(Product::class, 'macros_losses', 'factor_id', 'product_id')
+    return $this->belongsToMany(Product::class, 'weight_losses', 'factor_id', 'product_id')
                 ->withPivot('coefficient');
 }
 

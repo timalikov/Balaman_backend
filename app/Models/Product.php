@@ -34,17 +34,17 @@ class Product extends Model
 
     public function productCategory()
     {
-        return $this->belongsTo(ProductCategory::class, 'product_category_id', 'category_id');
+        return $this->belongsTo(ProductCategory::class, 'product_category_id', 'product_category_id');
     }
     
 
-    public function micros()
+    public function nutrients()
     {
-        return $this->belongsToMany(Micro::class, 'micros_products', 'product_id', 'micro_id');
+        return $this->belongsToMany(Nutrient::class, 'nutrients_products', 'product_id', 'nutrient_id');
     }
 
     public function factors() {
-    return $this->belongsToMany(Factor::class, 'macros_losses', 'product_id', 'factor_id')
+    return $this->belongsToMany(Factor::class, 'weight_losses', 'product_id', 'factor_id')
                 ->withPivot('coefficient');
 }
 
