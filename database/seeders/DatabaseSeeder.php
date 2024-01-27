@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProductCategoriesTableSeeder::class,
             ProductsTableSeeder::class,
-            MicrosSeeder::class,
-            MicrosProductsTableSeeder::class,
+            NutrientsTableSeeder::class,
+            
             FactorsTableSeeder::class,
             WeightLossesTableSeeder::class,
-            MicrosLossesByCategoriesTableSeeder::class,
+            NutrientLossesByCategoriesTableSeeder::class,
+            NutrientsProductsTableSeeder::class,
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
         ]);
