@@ -27,16 +27,10 @@ return new class extends Migration
             
             $table->integer('health_factor')->nullable();
 
-            // macronutrients
-            $table->float('protein');
-            $table->float('fat');
-            $table->float('carbohydrate');
-            $table->float('fiber')->nullable();
-            $table->float('total_sugar')->nullable();
-            $table->float('saturated_fat')->nullable();
             $table->float('kilocalories');
             $table->float('kilocalories_with_fiber')->nullable();
 
+            $table->foreign('dish_category_id')->references('dish_category_id')->on('dish_categories');
 
             $table->timestamps();
 

@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dish_categories', function (Blueprint $table) {
-            $table->id('dish_category_id');
+        Schema::create('nutrients', function (Blueprint $table) {
+            $table->id('nutrient_id'); 
             $table->string('name');
-            $table->string('code')->unique();
+            $table->string('code')->unique()->nullable();
             $table->timestamps();
         });
     }
@@ -24,7 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dish_categories');
-
+        Schema::dropIfExists('nutrients');
     }
 };
