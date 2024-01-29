@@ -21,12 +21,7 @@ class Dish extends Model
         'image_url',
         'has_relation_with_products',
         'health_factor',
-        'protein',
-        'fat',
-        'carbohydrate',
-        'fiber',
-        'total_sugar',
-        'saturated_fat',
+
         'kilocaries',
         'kilocaries_with_fiber',
 
@@ -40,6 +35,12 @@ class Dish extends Model
     public function micros()
     {
         return $this->belongsToMany(Micro::class, 'dishes_micros', 'dish_id', 'micro_id');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'dish_products', 'dish_id', 'product_id')
+                    ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
     }
 
 
