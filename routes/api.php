@@ -49,7 +49,7 @@ Route::middleware('role:admin')->get('/products/{product}', [ProductController::
 // ... other routes
 
 // Protected routes
-Route::middleware('role:admin')->post('/products', [ProductController::class, 'store']);
+Route::middleware('permission:all')->post('/products', [ProductController::class, 'store']);
 
 // Route::post('/products', [ProductController::class, 'store'])->middleware('api','checkRolePermission:create');
 Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('jwt.verify', 'checkRolePermission:update');
@@ -64,7 +64,6 @@ Route::apiResource(
     'dishes',
     DishController::class
 );
-
 
 Route::apiResource(
     'nutrients',

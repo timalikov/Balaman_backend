@@ -30,7 +30,7 @@ return new class extends Migration
             $table->float('kilocalories');
             $table->float('kilocalories_with_fiber')->nullable();
 
-            $table->foreign('dish_category_id')->references('dish_category_id')->on('dish_categories');
+            $table->foreign('dish_category_id')->references('dish_category_id')->on('dish_categories')->onDelete('cascade');
 
             $table->timestamps();
 

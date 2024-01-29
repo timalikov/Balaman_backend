@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dish_products', function (Blueprint $table) {
+        Schema::create('dishes_products', function (Blueprint $table) {
             $table->unsignedBigInteger('dish_id');
             $table->unsignedBigInteger('product_id');
 
@@ -25,8 +25,9 @@ return new class extends Migration
             $table->json('nutrients');
 
 
-            $table->foreign('dish_id')->references('dish_id')->on('dishes');
-            $table->foreign('product_id')->references('product_id')->on('products');
+            $table->foreign('dish_id')->references('dish_id')->on('dishes')->onDelete('cascade');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
+
 
             $table->primary(['dish_id', 'product_id']);
 
@@ -40,6 +41,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dish_products');
+        Schema::dropIfExists('dishes_products');
     }
 };

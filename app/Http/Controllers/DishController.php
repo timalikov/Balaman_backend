@@ -32,49 +32,57 @@ class DishController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'bls_code' => 'required|string',
-            'name' => 'required|string',
-            'description' => 'nullable|string',
+        $validatedData = $request->validate([
+            'bls_code' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
             'recipe_description' => 'nullable|string',
-
-            'dish_category_id' => 'exists:dish_categories,category_id',
-            'dish_category_code' => 'nullable|string',
-
-            'image_url' => 'nullable|string',
-            'has_relation_with_products' => 'nullable|boolean',
-            'health_factor' => 'nullable|integer',
-
+            'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
+            'dish_category_code' => 'nullable|string|max:255',
             'kilocalories' => 'required|numeric',
             'kilocalories_with_fiber' => 'nullable|numeric',
+            'image_url' => 'nullable|url',
+            'has_relation_with_products' => 'required|boolean',
+            'health_factor' => 'required|numeric',
 
+             // Validate the optional products array
             'products' => 'sometimes|array',
-            'products.*.product_id' => 'required_with:products|exists:products,product_id',
-            'products.*.nutrients' => 'required_with:products.*.product_id|array', 
+            'products.*.id' => 'required_with:products|integer|exists:products,id',
+            'products.*.kilocalories' => 'required_with:products|numeric',
+            'products.*.weight' => 'required_with:products|numeric',
 
         ]);
 
+        // Start transaction
         DB::beginTransaction();
-        try {
-            $dish = Dish::create([
-                'name' => $data['name'],
-                'description' => $data['description']
-            ]);
 
-            if (!empty($data['products'])) {
-                foreach ($data['products'] as $productData) {
-                    $dish->products()->attach($productData['product_id'], [
-                        'nutrients' => json_encode($productData['nutrients'] ?? [])
+        try {
+            $dish = Dish::create($validatedData);
+
+            // Check if products data is present
+            if (!empty($validatedData['products'])) {
+                foreach ($validatedData['products'] as $product) {
+                    // Here you need to insert data into your pivot table
+                    // Assuming you have a many-to-many relationship set up with Dish and Product models
+                    $dish->products()->attach($product['id'], [
+                        'kilocalories' => $product['kilocalories'],
+                        'weight' => $product['weight'],
                     ]);
                 }
             }
 
+            // Commit the transaction
             DB::commit();
-            return response()->json($dish->load('products'), 201);
+
+            return response()->json($dish, 201); 
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            // Rollback the transaction in case of an error
+            DB::rollback();
+
+            // Handle the error, maybe log it and return a custom error message
+            return response()->json(['error' => 'An error occurred while saving the dish.'], 500);
         }
+
     }
 
     /**

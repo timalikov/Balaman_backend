@@ -44,7 +44,7 @@ class Product extends Model
 
     public function dishes()
     {
-        return $this->belongsToMany(Dish::class, 'dish_products', 'product_id', 'dish_id')
+        return $this->belongsToMany(Dish::class, 'dishes_products', 'product_id', 'dish_id')
                     ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
 
     }
