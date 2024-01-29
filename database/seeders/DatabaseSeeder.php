@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             WeightLossesTableSeeder::class,
             NutrientLossesByCategoriesTableSeeder::class,
             NutrientsProductsTableSeeder::class,
+
             PermissionsTableSeeder::class,
             RolesTableSeeder::class,
         ]);
