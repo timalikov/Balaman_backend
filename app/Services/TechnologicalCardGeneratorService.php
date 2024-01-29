@@ -18,7 +18,7 @@ class TechnologicalCardGeneratorService{
             'protein' => 0,
             'fat' => 0,
             'carbohydrate' => 0,
-            'kilocaries' => 0,
+            'kilocalories' => 0,
             'weight' => 0
         ];
 
@@ -69,42 +69,40 @@ class TechnologicalCardGeneratorService{
 
         // Iterate over products and add a row for each
         foreach ($products as $productData) {
-            // Find the product model
-            $product = Product::with('factors')->find($productData['product_id']);
+            $table->addRow();
+            $table->addCell(2000)->addText($productData['name'] ?? '');
+            $table->addCell(2000)->addText($productData['brutto_weight'] ?? ''); // Assuming 'weight' is the gross weight
+            //net weight
+            $table->addCell(2000)->addText($productData['weight']); // Assuming 'weight' is the gross weight
+            $totals['weight'] += $productData['weight'];
 
-            // Get the selected factor IDs for this product
-            $selectedFactorIds = $productData['factor_id'] ?? [];
+            $proteinValue = $fatValue = $carbohydrateValue = 0;
 
-            // Initialize a variable to hold the total coefficient of loss
-            $totalCoefficientOfLoss = 1;
-
-            // Iterate over the selected factor IDs and accumulate the coefficients
-            foreach ($selectedFactorIds as $factorId) {
-                $factor = $product->factors->firstWhere('factor_id', $factorId);
-                if ($factor) {
-                    $totalCoefficientOfLoss *= $factor->pivot->coefficient;
+            foreach ($productData['nutrients'] as $nutrient) {
+                if ($nutrient['nutrient_id'] == 70) { // Protein
+                    $proteinValue = $nutrient['pivot']['weight'];
+                    $totals['protein'] += $proteinValue;
+                } elseif ($nutrient['nutrient_id'] == 21) { // Fat
+                    $fatValue = $nutrient['pivot']['weight'];
+                    $totals['fat'] += $fatValue;
+                } elseif ($nutrient['nutrient_id'] == 58) { // Carbohydrate
+                    $carbohydrateValue = $nutrient['pivot']['weight'];
+                    $totals['carbohydrate'] += $carbohydrateValue;
                 }
             }
 
-            
-            $table->addRow();
-            $table->addCell(2000)->addText($product['name'] ?? '');
-            $table->addCell(2000)->addText($product['weight'] ?? ''); // Assuming 'weight' is the gross weight
-            //net weight
-            $table->addCell(2000)->addText($product['weight'] * $totalCoefficientOfLoss ?? ''); // Assuming 'weight' is the gross weight
-            $totals['weight'] += $product['weight'] * $totalCoefficientOfLoss ?? '';
+            $table->addCell(2000)->addText($proteinValue ?? ''); 
 
-            $table->addCell(2000)->addText($product['protein'] * $totalCoefficientOfLoss ?? ''); 
-            $totals['protein'] += $product['protein'] * $totalCoefficientOfLoss ?? '';
+            $table->addCell(2000)->addText($fatValue ?? ''); 
 
-            $table->addCell(2000)->addText($product['fat'] * $totalCoefficientOfLoss ?? ''); 
-            $totals['fat'] += $product['fat'] * $totalCoefficientOfLoss ?? '';
+            $table->addCell(2000)->addText($carbohydrateValue ?? '' ); 
 
-            $table->addCell(2000)->addText($product['carbohydrate'] * $totalCoefficientOfLoss ?? ''); 
-            $totals['carbohydrate'] += $product['carbohydrate'] * $totalCoefficientOfLoss ?? '';
-
-            $table->addCell(2000)->addText($product['kilocaries'] * $totalCoefficientOfLoss ?? ''); 
-            $totals['kilocaries'] += $product['kilocaries'] * $totalCoefficientOfLoss ?? '';
+            if (isset($productData['kilocalories'])) {
+                $table->addCell(2000)->addText($productData['kilocalories']);
+                $totals['kilocalories'] += $productData['kilocalories'];
+            } else {
+                $table->addCell(2000)->addText('');
+            }
             
         }
 
@@ -118,7 +116,7 @@ class TechnologicalCardGeneratorService{
         $table->addCell(2000)->addText($totals['protein'] ?? '');
         $table->addCell(2000)->addText($totals['fat'] ?? '');
         $table->addCell(2000)->addText($totals['carbohydrate'] ?? '');
-        $table->addCell(2000)->addText($totals['kilocaries'] ?? '');
+        $table->addCell(2000)->addText($totals['kilocalories'] ?? '');
 
 
 
