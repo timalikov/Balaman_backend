@@ -32,7 +32,7 @@ for i in range(1, 27):
         third_column_copy = df[third_column_header].copy()
         df[third_column_header] = third_column_header
         df[str(third_column_header) + '_copy'] = third_column_copy
-        df.columns = ['product_category_id', 'factor_id', 'micro_id', 'coefficient'] + df.columns.tolist()[4:]
+        df.columns = ['product_category_id', 'factor_id', 'nutrient_id', 'coefficient'] + df.columns.tolist()[4:]
 
         third_column_name = df.columns[3]
         df[third_column_name] = df[third_column_name].apply(percent_to_coefficient)

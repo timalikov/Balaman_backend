@@ -20,16 +20,10 @@ class Product extends Model
         'product_category_id',
         'product_category_code',
         'price',
-        'protein',
-        'fat',
-        'carbohydrate',
-        'fiber',
-        'total_sugar',
-        'saturated_fat',
+        
         'kilocaries',
         'kilocaries_with_fiber',
         'image_url',
-        'is_seasonal',
     ];
 
     public function productCategory()
@@ -46,7 +40,14 @@ class Product extends Model
     public function factors() {
     return $this->belongsToMany(Factor::class, 'weight_losses', 'product_id', 'factor_id')
                 ->withPivot('coefficient');
-}
+    }
+
+    public function dishes()
+    {
+        return $this->belongsToMany(Dish::class, 'dishes_products', 'product_id', 'dish_id')
+                    ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
+
+    }
 
 
 

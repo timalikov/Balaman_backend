@@ -24,32 +24,13 @@ class NutrientCalculationService
 
                 // Update the weight in the $products array
                 $productData['weight'] = round($productData['weight'] * $coefficient, 2);
+                $productData['brutto_weight'] = $weight;
             }
         }
         unset($productData); // Unset reference to the last element
 
         return $products;
     }
-
-    // public function calculateWeight(array $products)
-    //     {
-    //         $sum = 0;
-    //         foreach ($products as $productData) {
-    //             if (isset($productData['factor_ids']) && isset($productData['weight'])) {
-    //                 $productId = $productData['product_id'];
-    //                 $factorIds = $productData['factor_ids'];
-    //                 $weight = $productData['weight'];
-
-    //                 $coefficients = $this->getCoefficients($productId, $factorIds);
-    //                 $sum = $coefficients;
-
-
-                    
-    //             }
-    //         }
-
-    //         return $sum;
-    //     }
 
 
     public function getCoefficients($productId, $factorIds)

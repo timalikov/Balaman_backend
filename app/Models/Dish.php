@@ -12,34 +12,26 @@ class Dish extends Model
     protected $primaryKey = 'dish_id';
 
     protected $fillable = [
-        'bls_code',
-        'name',
-        'description',
-        'recipe_description',
-        'dish_category_id',
-        'dish_category_code',
-        'image_url',
-        'has_relation_with_products',
-        'health_factor',
-        'protein',
-        'fat',
-        'carbohydrate',
-        'fiber',
-        'total_sugar',
-        'saturated_fat',
-        'kilocaries',
-        'kilocaries_with_fiber',
-
+        'bls_code', 'name', 'description', 'recipe_description', 
+        'dish_category_id', 'dish_category_code', 'image_url', 
+        'has_relation_with_products', 'health_factor', 'kilocalories', 
+        'kilocalories_with_fiber'
     ];
 
     public function dishCategory()
     {
-        return $this->belongsTo(DishCategory::class, 'dish_category_id', 'category_id');
+        return $this->belongsTo(DishCategory::class, 'dish_category_id', 'dish_category_id');
     }
 
-    public function micros()
+    public function nutrients()
     {
-        return $this->belongsToMany(Micro::class, 'dishes_micros', 'dish_id', 'micro_id');
+        return $this->belongsToMany(Nutrients::class, 'dishes_nutrients', 'dish_id', 'nutrient_id');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'dishes_products', 'dish_id', 'product_id')
+                    ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
     }
 
 
