@@ -37,11 +37,11 @@ class NutrientLossesByCategoriesTableSeeder extends Seeder
             foreach ($csv->getRecords() as $record) {
                 if ($this->isValidNumber($record['coefficient'])) {
                     DB::table('nutrient_losses_by_categories')->insert([
-                        'product_category_id'  => $record['product_category_id'],
-                        'factor_id'   => $record['factor_id'],
-                        'nutrient_id' => $record['nutrient_id'],
-                        'coefficient' => $record['coefficient'],
-                        'created_at'  => now(),
+                        'product_category_id' => (int) $record['product_category_id'],
+                        'factor_id'           => (int) $record['factor_id'],
+                        'nutrient_id'         => (int) $record['nutrient_id'],
+                        'coefficient'         => (float) $record['coefficient'],
+                        'created_at'          => now(),
                     ]);
 
                     $insertedRecords[] = $record;

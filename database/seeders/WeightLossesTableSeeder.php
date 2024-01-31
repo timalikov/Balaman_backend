@@ -38,9 +38,9 @@ class WeightLossesTableSeeder extends Seeder
             foreach ($csv->getRecords() as $record) {
                 if ($this->isValidNumber($record['coefficient'])) {
                     DB::table('weight_losses')->insert([
-                        'product_id'  => $record['product_id'],
-                        'factor_id'   => $record['factor_id'],
-                        'coefficient' => $record['coefficient'],
+                        'product_id'  => (int) $record['product_id'],
+                        'factor_id'   => (int) $record['factor_id'],
+                        'coefficient' => (float) $record['coefficient'],
                         'created_at'  => now(),
                     ]);
 

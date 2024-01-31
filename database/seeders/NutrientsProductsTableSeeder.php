@@ -35,9 +35,9 @@ class NutrientsProductsTableSeeder extends Seeder
                 }
 
                 DB::table('nutrients_products')->insert([
-                    'nutrient_id' => $record['nutrient_id'],
-                    'product_id' => $record['product_id'], 
-                    'weight' => $record['weight'],
+                    'nutrient_id' => (int) $record['nutrient_id'],
+                    'product_id'  => (int) $record['product_id'],
+                    'weight'      => (float) $record['weight'],
                 ]);
             }
         }
