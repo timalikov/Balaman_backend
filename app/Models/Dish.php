@@ -25,7 +25,7 @@ class Dish extends Model
 
     public function nutrients()
     {
-        return $this->belongsToMany(Nutrients::class, 'dishes_nutrients', 'dish_id', 'nutrient_id');
+        return $this->belongsToMany(Nutrient::class, 'dishes_nutrients', 'dish_id', 'nutrient_id');
     }
 
     public function products()

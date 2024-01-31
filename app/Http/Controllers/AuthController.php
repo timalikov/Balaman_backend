@@ -33,7 +33,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|confirmed|min:6',
+            'password' => 'required|string|min:6',
             'role_name' => 'sometimes|string' 
         ]);
     
@@ -98,7 +98,18 @@ class AuthController extends Controller
 
         Log::info("User authenticated: " . Auth::guard('web')->user()->email);
 
-        return $this->requestOAuthTokens($request);
+        // return $this->requestOAuthTokens($request);
+
+        $response = Http::timeout(10)->post('http://127.0.0.1:8002/oauth/token', [
+            'grant_type' => 'password',
+            'client_id' => 4,
+            'client_secret' => 'gFGELOlNGUbhqDKpOKzPGHrd2yJPeoREYNILz7Jr',
+            'username' => 'hey1@mail.ru',
+            'password' => '123456',
+            'scope' => '',
+        ]);
+
+        return $response;
     }
 
     protected function requestOAuthTokens(Request $request)

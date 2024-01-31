@@ -16,7 +16,7 @@ class DishController extends Controller
     public function index()
     {
         //
-        $dishes = Dish::with('products')->get();
+        $dishes = Dish::with('products', 'nutrients')->get();
         return response()->json($dishes);
     }
 
@@ -47,49 +47,56 @@ class DishController extends Controller
             'health_factor' => 'required|numeric',
             'price' => 'required|numeric',
 
-             // Validate the optional products array
-             'products' => 'sometimes|array',
-             'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
-             'products.*.kilocalories' => 'required_with:products|numeric',
-             'products.*.weight' => 'required_with:products|numeric',
-             'products.*.price' => 'required_with:products|numeric', // Added price validation
-             'products.*.kilocalories_with_fiber' => 'nullable|numeric', // Added kilocalories_with_fiber validation
+            'nutrients' => 'nullable|array',
+
+            // Validate the optional products array
+            'products' => 'nullable|array',
+            'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
+            'products.*.kilocalories' => 'required_with:products|numeric',
+            'products.*.weight' => 'required_with:products|numeric',
+            'products.*.price' => 'required_with:products|numeric', // Added price validation
+            'products.*.kilocalories_with_fiber' => 'nullable|numeric', // Added kilocalories_with_fiber validation
+            'products.*.nutrients' => 'required_with:products|array', // Added nutrients validation
             
 
         ]);
 
-        // Start transaction
-        DB::beginTransaction();
+        if ($request->has('products')) {
+            $validatedData['has_relation_with_products'] = true;
+        }else{
+            $validatedData['has_relation_with_products'] = false;
+        }
+        // Create the dish
+        $dish = Dish::create($validatedData);
 
-        try {
-            $dish = Dish::create($validatedData);
-
-            // Check if products data is present
-            if (!empty($validatedData['products'])) {
-                foreach ($validatedData['products'] as $product) {
-                    // Include price and kilocalories_with_fiber in the pivot table data
-                    $dish->products()->attach($product['product_id'], [
-                        'kilocalories' => $product['kilocalories'],
-                        'weight' => $product['weight'],
-                        'price' => $product['price'], // Include price
-                        'kilocalories_with_fiber' => $product['kilocalories_with_fiber'] ?? null, // Include kilocalories_with_fiber if available
-                    ]);
-                }
+        // Check if the request has 'products' array
+        if ($request->has('products')) {
+            $productsData = [];
+            foreach ($request->input('products') as $product) {
+                // Assuming each product in the array has 'product_id' and 'product_weight'
+                $productsData[$product['product_id']] = [
+                    'weight' => $product['weight'],
+                    'kilocalories' => $product['kilocalories'],
+                    'price' => $product['price'], // Added price
+                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'], // Added kilocalories_with_fiber
+                    'nutrients' => json_encode($product['nutrients']) // Encoding the nutrients array as JSON
+                ];
             }
 
-            // Commit the transaction
-            DB::commit();
-
-            return response()->json($dish, 201); 
-        } catch (\Exception $e) {
-            // Rollback the transaction in case of an error
-            DB::rollback();
-
-            Log::error('Error saving dish: ' . $e->getMessage());
-
-            // Handle the error, maybe log it and return a custom error message
-            return response()->json(['error' => 'An error occurred while saving the dish.'], 500);
+            // Attach product IDs with additional pivot data to the dish
+            $dish->products()->attach($productsData);
+        } elseif ($request->has('nutrients')) {
+            $nutrientsData = [];
+            foreach($request->input('nutrients') as $nutrient){
+                $nutrientsData[$nutrient['nutrient_id']] = [
+                    'weight' => $nutrient['pivot']['weight'],
+                ];
+            }
+            $dish->nutrients()->attach($nutrientsData);
         }
+
+
+        return response()->json($dish, 201);
 
     }
 
