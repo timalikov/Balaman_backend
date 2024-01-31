@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dish;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class DishController extends Controller
@@ -44,12 +45,16 @@ class DishController extends Controller
             'image_url' => 'nullable|url',
             'has_relation_with_products' => 'required|boolean',
             'health_factor' => 'required|numeric',
+            'price' => 'required|numeric',
 
              // Validate the optional products array
-            'products' => 'sometimes|array',
-            'products.*.id' => 'required_with:products|integer|exists:products,id',
-            'products.*.kilocalories' => 'required_with:products|numeric',
-            'products.*.weight' => 'required_with:products|numeric',
+             'products' => 'sometimes|array',
+             'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
+             'products.*.kilocalories' => 'required_with:products|numeric',
+             'products.*.weight' => 'required_with:products|numeric',
+             'products.*.price' => 'required_with:products|numeric', // Added price validation
+             'products.*.kilocalories_with_fiber' => 'nullable|numeric', // Added kilocalories_with_fiber validation
+            
 
         ]);
 
@@ -62,11 +67,12 @@ class DishController extends Controller
             // Check if products data is present
             if (!empty($validatedData['products'])) {
                 foreach ($validatedData['products'] as $product) {
-                    // Here you need to insert data into your pivot table
-                    // Assuming you have a many-to-many relationship set up with Dish and Product models
-                    $dish->products()->attach($product['id'], [
+                    // Include price and kilocalories_with_fiber in the pivot table data
+                    $dish->products()->attach($product['product_id'], [
                         'kilocalories' => $product['kilocalories'],
                         'weight' => $product['weight'],
+                        'price' => $product['price'], // Include price
+                        'kilocalories_with_fiber' => $product['kilocalories_with_fiber'] ?? null, // Include kilocalories_with_fiber if available
                     ]);
                 }
             }
@@ -78,6 +84,8 @@ class DishController extends Controller
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollback();
+
+            Log::error('Error saving dish: ' . $e->getMessage());
 
             // Handle the error, maybe log it and return a custom error message
             return response()->json(['error' => 'An error occurred while saving the dish.'], 500);

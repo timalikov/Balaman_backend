@@ -10,6 +10,9 @@ use App\Models\Role;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash; 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 
 class AuthController extends Controller
 {
@@ -59,25 +62,68 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request){
-        $validator = Validator::make($request->all(), [
+    protected function validateLogin(Request $request)
+    {
+        return Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
-
-        if($validator->fails()){
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()->toJson()
-            ], 400);
-        }
-        if(!$token = auth()->attempt($validator->validated())){
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        return $this->createNewToken($token);
     }
+
+    protected function validationErrorResponse($errors)
+    {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $errors
+        ], 400);
+    }
+
+    protected function attemptLogin(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+        return Auth::guard('web')->attempt($credentials);
+    }
+
+    public function login(Request $request)
+    {
+        $validator = $this->validateLogin($request);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
+        }
+
+        if (!$this->attemptLogin($request)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        Log::info("User authenticated: " . Auth::guard('web')->user()->email);
+
+        return $this->requestOAuthTokens($request);
+    }
+
+    protected function requestOAuthTokens(Request $request)
+    {
+        $response = Http::post(env('OAUTH_TOKEN_URL'), [
+            'grant_type' => 'password',
+            'client_id' => env('OAUTH_CLIENT_ID'), // Use environment variable
+            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use environment variable
+            'username' => $request->email,
+            'password' => $request->password,
+            'scope' => '' // define scopes here if needed
+        ]);
+        
+        if (!$response->ok()) {
+            Log::error("OAuth token request failed: Status Code: " . $response->status() . ", Response Body: " . $response->body());
+            throw new \Exception("OAuth token request failed.");
+        }
+
+        $tokens = $response->json();
+
+        // $this->storeTokensInCache($tokens['access_token'], $tokens['refresh_token'], $tokens['expires_in']);
+
+        return response()->json($tokens);
+    }
+
 
     public function createNewToken($token){
         $user = auth()->user();
