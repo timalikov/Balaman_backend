@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\NutrientCalculationService;
 use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
+use App\Services\TotalWeightService;
 use Illuminate\Http\Request;
 
 
@@ -14,12 +15,14 @@ class NutrientCalculationController extends Controller
     protected $nutrientCalculationService;
     protected $weightCalculationService;
     protected $productFetchService;
+    protected $totalWeightService;
 
-    public function __construct(NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService)
+    public function __construct(NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService, TotalWeightService $totalWeightService)
     {
         $this->nutrientCalculationService = $nutrientCalculationService;
         $this->weightCalculationService = $weightCalculationService;
         $this->productFetchService = $productFetchService;
+        $this->totalWeightService = $totalWeightService;
     }
 
     public function calculate(Request $request)
@@ -44,9 +47,12 @@ class NutrientCalculationController extends Controller
         // Calculate nutrients for the products
         $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights);
 
+        $totals = $this->totalWeightService->calculateTotals($productsWithUpdatedNutrients);
+
         // Prepare the response
         $response = [
-            'products' => $productsWithUpdatedNutrients
+            'products' => $productsWithUpdatedNutrients,
+            'totals' => $totals
         ];
     
         return response()->json($response);

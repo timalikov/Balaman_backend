@@ -1,5 +1,4 @@
 <?php
-// promt:Great! How can I using this information about Products create data, with showing info about each product, its nutrients with, its factor,
 
 
 namespace App\Services;
