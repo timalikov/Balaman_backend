@@ -15,13 +15,11 @@ class WeightCalculationController extends Controller
 {
     protected $weightCalculationService;
     protected $productFetchService;
-    protected $httpRequestService;
 
-    public function __construct(WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService, HttpRequestService $httpRequestService)
+    public function __construct(WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService)
     {
         $this->weightCalculationService = $weightCalculationService;
         $this->productFetchService = $productFetchService;
-        $this->httpRequestService = $httpRequestService;
 
     }
 
@@ -39,18 +37,7 @@ class WeightCalculationController extends Controller
         
         // return $processedProducts;
 
-        Log::info('Processing /api/factors request');
-
-        $url = 'http://127.0.0.1:8000/api/factors';
-        $data = ['name' => 'value'];
-
-
-        $response = Http::timeout(60)->post('http://127.0.0.1:8000/api/factors', [
-            'name' => 'Example Title'
-        ]);
-        Log::info('Completed /api/factors request');
-
-        
+        $response = "hello";
 
         return $response;
     }

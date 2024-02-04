@@ -89,27 +89,37 @@ class AuthController extends Controller
         $validator = $this->validateLogin($request);
 
         if ($validator->fails()) {
-            return Response::HTTP;
+            return response()->json(['message' => 'Validation failed'], 400);
         }
 
         if (!$this->attemptLogin($request)) {
             return Response::HTTP_UNAUTHORIZED;
         }
 
-        return $this->requestOAuthTokens($request);
+        $grantType = 'password';
+
+        return $this->requestOAuthTokens($request, $grantType);
     }
 
-    protected function requestOAuthTokens(Request $request)
+    protected function requestOAuthTokens(Request $request, $grantType)
     {
-        // Create a POST request to the OAuth token endpoint
+        // Base token request data
         $tokenRequestData = [
-            'grant_type' => 'password',
-            'client_id' => env('OAUTH_CLIENT_ID'), // Use actual client_id
-            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use actual client_secret
-            'username' => $request->input('email'), // The user's email
-            'password' => $request->input('password'), // The user's password
+            'grant_type' => $grantType,
+            'client_id' => env('OAUTH_CLIENT_ID'), // Use actual client_id from your .env or config
+            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use actual client_secret from your .env or config
             'scope' => '', // Define scopes here if needed
         ];
+
+        // Conditional logic based on grant type
+        if ($grantType === 'password') {
+            // For password grant type, include user credentials
+            $tokenRequestData['username'] = $request->input('email');
+            $tokenRequestData['password'] = $request->input('password');
+        } elseif ($grantType === 'refresh_token' && $request->has('refresh_token')) {
+            // For refresh token grant type, include the refresh token
+            $tokenRequestData['refresh_token'] = $request->input('refresh_token');
+        }
 
         // Create the request instance
         $tokenRequest = Request::create('/oauth/token', 'POST', $tokenRequestData);
@@ -120,23 +130,17 @@ class AuthController extends Controller
         // Assuming the response is JSON, you can decode it
         $responseContent = json_decode($tokenResult->getContent(), true);
 
-        // You can then access the response status code and body as needed
+        // Check the response status code
         $statusCode = $tokenResult->getStatusCode();
-        $responseBody = $tokenResult->getContent();
 
-        // Use the response data as required
         if ($statusCode == 200) {
-            // Success handling
-            $tokens = $responseContent;
-            // Do something with the tokens
+            // If the request was successful, return the tokens
+            return response()->json($responseContent);
         } else {
-            // Error handling
-            Log::error("OAuth token request failed: Status Code: $statusCode, Response Body: $responseBody");
-            // Handle the error accordingly
+            // Log the error and return an appropriate error response
+            Log::error("OAuth token request failed: Status Code: $statusCode, Response: " . $tokenResult->getContent());
+            return response()->json(['message' => 'Failed to obtain access token'], $statusCode);
         }
-
-        // Returning or further processing
-        return response()->json($tokens);
     }
 
     public function profile(){
@@ -153,8 +157,19 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken(){
-        return $this->createNewToken(auth()->refresh());
+    public function refreshToken(Request $request){
+        
+         // Validate that a refresh token is provided
+        $request->validate([
+            'refresh_token' => 'required',
+        ]);
+
+        $grantType = 'refresh_token';
+
+        // Attempt to refresh the token
+        $response = $this->requestOAuthTokens($request, $grantType);
+
+        return $response;
     }
 
 }
