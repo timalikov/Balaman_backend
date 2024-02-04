@@ -89,70 +89,55 @@ class AuthController extends Controller
         $validator = $this->validateLogin($request);
 
         if ($validator->fails()) {
-            return $this->validationErrorResponse($validator->errors());
+            return Response::HTTP;
         }
 
         if (!$this->attemptLogin($request)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return Response::HTTP_UNAUTHORIZED;
         }
 
-        Log::info("User authenticated: " . Auth::guard('web')->user()->email);
-
-        // return $this->requestOAuthTokens($request);
-
-        $response = Http::timeout(10)->post('http://127.0.0.1:8002/oauth/token', [
-            'grant_type' => 'password',
-            'client_id' => 4,
-            'client_secret' => 'gFGELOlNGUbhqDKpOKzPGHrd2yJPeoREYNILz7Jr',
-            'username' => 'hey1@mail.ru',
-            'password' => '123456',
-            'scope' => '',
-        ]);
-
-        return $response;
+        return $this->requestOAuthTokens($request);
     }
 
     protected function requestOAuthTokens(Request $request)
     {
-        $response = Http::post(env('OAUTH_TOKEN_URL'), [
+        // Create a POST request to the OAuth token endpoint
+        $tokenRequestData = [
             'grant_type' => 'password',
-            'client_id' => env('OAUTH_CLIENT_ID'), // Use environment variable
-            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use environment variable
-            'username' => $request->email,
-            'password' => $request->password,
-            'scope' => '' // define scopes here if needed
-        ]);
+            'client_id' => env('OAUTH_CLIENT_ID'), // Use actual client_id
+            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use actual client_secret
+            'username' => $request->input('email'), // The user's email
+            'password' => $request->input('password'), // The user's password
+            'scope' => '', // Define scopes here if needed
+        ];
+
+        // Create the request instance
+        $tokenRequest = Request::create('/oauth/token', 'POST', $tokenRequestData);
         
-        if (!$response->ok()) {
-            Log::error("OAuth token request failed: Status Code: " . $response->status() . ", Response Body: " . $response->body());
-            throw new \Exception("OAuth token request failed.");
+        // Handle the request internally
+        $tokenResult = app()->handle($tokenRequest);
+
+        // Assuming the response is JSON, you can decode it
+        $responseContent = json_decode($tokenResult->getContent(), true);
+
+        // You can then access the response status code and body as needed
+        $statusCode = $tokenResult->getStatusCode();
+        $responseBody = $tokenResult->getContent();
+
+        // Use the response data as required
+        if ($statusCode == 200) {
+            // Success handling
+            $tokens = $responseContent;
+            // Do something with the tokens
+        } else {
+            // Error handling
+            Log::error("OAuth token request failed: Status Code: $statusCode, Response Body: $responseBody");
+            // Handle the error accordingly
         }
 
-        $tokens = $response->json();
-
-        // $this->storeTokensInCache($tokens['access_token'], $tokens['refresh_token'], $tokens['expires_in']);
-
+        // Returning or further processing
         return response()->json($tokens);
     }
-
-
-    public function createNewToken($token){
-        $user = auth()->user();
-        $role = $user->getRoleNames()->first();
-
-        // Add custom claims with user role
-        $customClaims = ['role' => $role];
-        
-        $customToken = auth()->claims($customClaims)->login($user);
-    
-        return response()->json([
-            'access_token' => $customToken,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => $user
-        ]);
-    }
-    
 
     public function profile(){
         return response()->json(auth()->user());

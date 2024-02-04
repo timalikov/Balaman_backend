@@ -35,7 +35,15 @@ class FactorController extends Controller
     public function store(Request $request)
     {
         //
+        $validatedData = $request->validate([
+            'name' => 'string'
+        ]);
+        
+        $factor = Factor::create($validatedData);
+
+        return response()->json($factor, 201);
     }
+
 
     /**
      * Display the specified resource.
