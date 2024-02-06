@@ -106,8 +106,8 @@ class AuthController extends Controller
         // Base token request data
         $tokenRequestData = [
             'grant_type' => $grantType,
-            'client_id' => env('OAUTH_CLIENT_ID'), // Use actual client_id from your .env or config
-            'client_secret' => env('OAUTH_CLIENT_SECRET'), // Use actual client_secret from your .env or config
+            'client_id' => config('jwt.oauth_client_id'), // Use actual client_id from your .env or config
+            'client_secret' => config('jwt.oauth_client_secret'), // Use actual client_secret from your .env or config
             'scope' => '', // Define scopes here if needed
         ];
 

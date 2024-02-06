@@ -27,6 +27,10 @@ return [
 
     'secret' => env('JWT_SECRET'),
 
+    /* PASSPORT CLIENT INFORMATION FOR OAUTH */
+
+    'oauth_client_id' => env('OAUTH_CLIENT_ID'),
+    'oauth_client_secret' => env('OAUTH_CLIENT_SECRET'),
     /*
     |--------------------------------------------------------------------------
     | JWT Authentication Keys
