@@ -55,15 +55,17 @@ Route::middleware('permission:all')->post('/products', [ProductController::class
 Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('jwt.verify', 'checkRolePermission:update');
 Route::delete('/products/{product}', [ProductController::class, 'delete'])->middleware('jwt.verify', 'checkRolePermission:destroy');
 
-// Route::apiResource(
-//     'products',
-//     ProductController::class
-// );
+Route::apiResource(
+    'products',
+    ProductController::class
+);
 
 Route::apiResource(
     'dishes',
     DishController::class
 );
+
+Route::post('/dishes', [DishController::class, 'store']);
 
 Route::apiResource(
     'nutrients',

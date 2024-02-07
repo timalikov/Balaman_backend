@@ -116,7 +116,6 @@ class DishController extends Controller
             'kilocalories' => 'required|numeric',
             'kilocalories_with_fiber' => 'nullable|numeric',
             'image_url' => 'nullable|url',
-            'has_relation_with_products' => 'required|boolean',
             'health_factor' => 'required|numeric',
             'price' => 'required|numeric',
 
@@ -125,11 +124,11 @@ class DishController extends Controller
             // Validate the optional products array
             'products' => 'nullable|array',
             'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
-            'products.*.kilocalories' => 'required_with:products|numeric',
+            // 'products.*.kilocalories' => 'required_with:products|numeric',
             'products.*.weight' => 'required_with:products|numeric',
-            'products.*.price' => 'required_with:products|numeric', // Added price validation
-            'products.*.kilocalories_with_fiber' => 'nullable|numeric', // Added kilocalories_with_fiber validation
-            'products.*.nutrients' => 'required_with:products|array', // Added nutrients validation
+            // 'products.*.price' => 'required_with:products|numeric', // Added price validation
+            // 'products.*.kilocalories_with_fiber' => 'nullable|numeric', // Added kilocalories_with_fiber validation
+            // 'products.*.nutrients' => 'required_with:products|array', // Added nutrients validation
             
 
         ]);
@@ -144,9 +143,10 @@ class DishController extends Controller
 
         // Check if the request has 'products' array
         if ($request->has('products')) {
-            $products = $this->productFetchService->completeProductRequest($request->input('products'));
+
+            $requestData = $request->input('products'); 
             
-            return $products;
+            $products = $this->productFetchService->completeProductRequest($requestData);
             
             if (is_null($products) || !is_array($products)) {
                 return response()->json(['error' => 'Invalid products data'], 400);
