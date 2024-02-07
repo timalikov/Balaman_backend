@@ -31,8 +31,8 @@ class TechnologicalCardController extends Controller
 
     public function generate(Request $request)
     {
-        // $products = $request->input('products', []);
-        $products = $this->productFetchService->completeProductRequest($request);     
+        $requestData = $request->input('products');
+        $products = $this->productFetchService->completeProductRequest($requestData);     
 
         // Validate that products is not null and is an array
         if (is_null($products) || !is_array($products)) {
