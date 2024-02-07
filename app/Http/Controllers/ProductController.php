@@ -32,7 +32,7 @@ class ProductController extends Controller
         $query = Product::with(['productCategory' => function($query) {
                 $query->select('product_category_id', 'name');
             }])
-            ->select(["product_id", 'name', 'description', 'product_category_id']);
+            ->select(['product_id', 'bls_code', 'name', 'description', 'product_category_id']);
 
 
         // Handle the general search parameter
@@ -125,7 +125,7 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(int $id)
     {
         // Fetch the product by its ID along with related data
         $product = Product::with([
@@ -156,7 +156,7 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(int $id)
     {
         //
     }
@@ -164,7 +164,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, int $id)
     {
         //
     }
@@ -172,7 +172,7 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(int $id)
     {
         //
         $product = Product::findOrFail($id);

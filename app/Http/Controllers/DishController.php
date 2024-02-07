@@ -2,22 +2,95 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Dish;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\Services\NutrientCalculationService;
+use App\Services\WeightCalculationService;
+use App\Services\ProductFetchService;
+
+use App\Models\Dish;
+use App\Models\DishCategory;
 
 class DishController extends Controller
 {
+    protected $nutrientCalculationService;
+    protected $weightCalculationService;
+    protected $productFetchService;
+
+    public function __construct(NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService)
+    {
+        $this->nutrientCalculationService = $nutrientCalculationService;
+        $this->weightCalculationService = $weightCalculationService;
+        $this->productFetchService = $productFetchService;
+    }
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $dishes = Dish::with('products', 'nutrients')->get();
-        return response()->json($dishes);
+        // $dishes = Dish::with('products', 'nutrients')->get();
+        // return response()->json($dishes);
+
+        // Validate the request
+        $request->validate([
+            'search' => 'string|nullable',
+            'dish_id' => 'integer|nullable',
+            'dish_category_id' => 'integer|nullable',
+            'per_page' => 'integer|nullable',
+            'page' => 'integer|nullable' // Add validation for 'page'
+        ]);
+
+        // Check for specific product ID search
+        if ($request->has('dish_id')) {
+            // call the show function in this class
+            return $this->show($request->input('dish_id'));
+        }
+
+        // Continue with the regular search and filtering
+        $query = Dish::with(['dishCategory' => function($query) {
+                $query->select('dish_category_id', 'name');
+            }])
+            ->select(['dish_id', 'bls_code', 'name', 'description', 'health_factor', 'dish_category_id', 'has_relation_with_products']);
+
+
+        // Handle the general search parameter
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->orWhereHas('dishCategory', function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%');
+                });
+            });
+        }
+
+        // Filter by product_category_id if provided
+        if ($request->has('dish_category_id')) {
+            $query->whereHas('dishCategory', function ($q) use ($request) {
+                $q->where('dish_category_id', $request->input('dish_category_id'));
+            });
+        }
+
+        // Determine the number of products per page
+        $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+        $currentPage = $request->input('page', 1); // Default to 1 if not provided
+
+        // Get the results with pagination
+        $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
+
+        // Optional: Customize the response format
+        return response()->json([
+            'current_page' => $products->currentPage(),
+            'items_per_page' => $products->perPage(),
+            'total_items' => $products->total(),
+            'total_pages' => $products->lastPage(),
+            'data' => $products->items()
+        ]);
     }
 
     /**
@@ -71,8 +144,24 @@ class DishController extends Controller
 
         // Check if the request has 'products' array
         if ($request->has('products')) {
+            $products = $this->productFetchService->completeProductRequest($request->input('products'));
+            
+            return $products;
+            
+            if (is_null($products) || !is_array($products)) {
+                return response()->json(['error' => 'Invalid products data'], 400);
+            }
+    
+            $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+    
+            // Calculate modified weights for the products
+            $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+    
+            // Calculate nutrients for the products
+            $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights); 
+
             $productsData = [];
-            foreach ($request->input('products') as $product) {
+            foreach ($productsWithUpdatedNutrients as $product) {
                 // Assuming each product in the array has 'product_id' and 'product_weight'
                 $productsData[$product['product_id']] = [
                     'weight' => $product['weight'],
@@ -103,12 +192,34 @@ class DishController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Dish $dish)
-    {
-        //≠
-        $dish = Dish::with('products')->findOrFail($id);
-        return response()->json($dish);
+    public function show(int $id)
+{
+    // Fetch the dish by its ID
+    $dish = Dish::findOrFail($id);
+
+    // Attempt to load products to check if the dish has any related products
+    $productsCount = $dish->products()->count();
+
+    if ($productsCount > 0) {
+        // If the dish has related products, load them along with the pivot data
+        $dish->load([
+            'products' => function ($query) {
+                $query->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
+            }
+        ]);
+    } else {
+        // If no related products, load the nutrients directly
+        $dish->load([
+            'nutrients' => function($query) {
+                $query->withPivot('weight');
+            }
+        ]);
     }
+
+    // Return the dish data as a JSON response
+    return response()->json($dish);
+}
+
 
     /**
      * Show the form for editing the specified resource.

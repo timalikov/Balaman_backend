@@ -10,10 +10,10 @@ use Illuminate\Http\Request;
 
 class ProductFetchService {
     
-    public function completeProductRequest(Request $request)
+    public function completeProductRequest(array $productsData)
     {
-        $products = $request->input('products');
-        foreach ($products as &$productData) {
+        // $products = $request->input('products');
+        foreach ($productsData as &$productData) {
             if (isset($productData['product_id'])) {
                 $productId = $productData['product_id'];
                 $productDetails = $this->fetchProductDetails($productId);
@@ -27,8 +27,7 @@ class ProductFetchService {
         unset($productData); // Unset reference to last element
 
 
-        return $products;
-
+        return $productsData;
     }
 
     private function fetchProductDetails($productId)

@@ -75,7 +75,8 @@ Route::apiResource(
     FactorController::class
 );
 
-Route::post('/calculate-nutrients', [NutrientCalculationController::class, 'calculate']);
+Route::post('/calculate-total-nutrients', [NutrientCalculationController::class, 'calculateTotalNutrients']);
+Route::post('/nutrient-details', [NutrientCalculationController::class, 'calculateProductNutrientDetails']);
 
 // generate-technological-card
 Route::post('/generate-technological-card', [TechnologicalCardController::class, 'generate']);

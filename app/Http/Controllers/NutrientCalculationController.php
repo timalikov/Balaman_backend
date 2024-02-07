@@ -25,14 +25,13 @@ class NutrientCalculationController extends Controller
         $this->totalWeightService = $totalWeightService;
     }
 
-    public function calculate(Request $request)
+    public function calculateTotalNutrients(Request $request)
     {        
-        // Get products from request
-        $products = $this->productFetchService->completeProductRequest($request);     
+        // Extract or transform the request data to the expected format
+        $requestData = $request->input('products'); 
 
-        // $products = $request->input('products');
-        // return $products;
-       
+        // Get products from request
+        $products = $this->productFetchService->completeProductRequest($requestData);            
 
         // Validate that products is not null and is an array
         if (is_null($products) || !is_array($products)) {
@@ -51,10 +50,49 @@ class NutrientCalculationController extends Controller
 
         // Prepare the response
         $response = [
-            'products' => $productsWithUpdatedNutrients,
+            // 'products' => $productsWithUpdatedNutrients,
             'totals' => $totals
         ];
     
         return response()->json($response);
     }
+
+    public function calculateProductNutrientDetails(Request $request)
+    {        
+        // Validate and extract the single product information from the request.
+        $productData = $request->validate([
+            'product_id' => 'required|numeric',
+            'weight' => 'required|numeric',
+            'factor_ids' => 'required|array',
+        ]);
+
+        // Prepare the data in the expected format for the processing method.
+        $requestData = [
+            'products' => [$productData] // Wrap the single product data in a 'products' array.
+        ];
+        
+        // Get products from request
+        $products = $this->productFetchService->completeProductRequest($requestData['products']);
+
+        // Validate that products is not null and is an array
+        if (is_null($products) || !is_array($products)) {
+            return response()->json(['error' => 'Invalid products data'], 400);
+        }
+
+        $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+        // Calculate modified weights for the products
+        $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+
+        // Calculate nutrients for the products
+        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights);
+
+        // Prepare the response
+        $processedProductDetails = $productsWithUpdatedNutrients[0] ?? null;
+
+        // Return the processed product details directly.
+        return response()->json($processedProductDetails);
+    }
+
+
 }
