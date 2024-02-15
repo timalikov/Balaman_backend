@@ -242,17 +242,16 @@ class DishController extends Controller
      */
     public function destroy(Dish $dish)
     {
-        //
-        $dish = Dish::findOrFail($id);
         DB::beginTransaction();
         try {
-            $dish->products()->detach();
-            $dish->delete();
-            DB::commit();
-            return response()->json(null, 204);
+            $dish->products()->detach(); // Detach the related products assuming a many-to-many relationship
+            $dish->delete(); // Delete the dish
+            DB::commit(); // Commit the transaction
+            return response()->json(null, 204); // Return a 204 No Content response
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            DB::rollBack(); // Roll back the transaction in case of an error
+            return response()->json(['error' => $e->getMessage()], 500); // Return a 500 Internal Server Error response
         }
     }
+
 }

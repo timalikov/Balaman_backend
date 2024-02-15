@@ -65,8 +65,6 @@ Route::apiResource(
     DishController::class
 );
 
-Route::post('/dishes', [DishController::class, 'store']);
-
 Route::apiResource(
     'nutrients',
     NutrientController::class
