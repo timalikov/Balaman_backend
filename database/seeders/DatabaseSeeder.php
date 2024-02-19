@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
 
             DishCategoriesTableSeeder::class,
 
+            MealTimesTableSeeder::class,
+
 
         ]);
     

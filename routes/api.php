@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FactorController;
 use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\NutrientController;
+use App\Http\Controllers\MenuController;
 
 
 
@@ -35,7 +36,7 @@ Route::group(
     ],
     function ($router) {
         Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
@@ -82,3 +83,13 @@ Route::post('/nutrient-details', [NutrientCalculationController::class, 'calcula
 Route::post('/generate-technological-card', [TechnologicalCardController::class, 'generate']);
 
 Route::post('/calculate-weight', [WeightCalculationController::class, 'process']);
+
+
+Route::apiResource(
+    'menus',
+    MenuController::class
+);
+
+Route::post('/menus/{menuId}/meal-plans', [MenuController::class, 'createMealPlan']);
+
+Route::post('/menus/{menuId}/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
