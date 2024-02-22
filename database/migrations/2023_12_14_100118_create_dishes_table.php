@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('dish_category_id');
             $table->string('dish_category_code')->nullable();
 
-            $table->float('price');
+            $table->float('price')->default(0);
             $table->float('weight', 8, 2);
             $table->float('kilocalories');
             $table->float('kilocalories_with_fiber')->nullable();
