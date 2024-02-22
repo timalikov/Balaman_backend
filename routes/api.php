@@ -8,6 +8,7 @@ use App\Http\Controllers\NutrientCalculationController;
 use App\Http\Controllers\TechnologicalCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FactorController;
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\MenuController;
@@ -74,6 +75,11 @@ Route::apiResource(
 Route::apiResource(
     'factors',
     FactorController::class
+);
+
+Route::apiResource(
+    'product-categories',
+    ProductCategoryController::class
 );
 
 Route::post('/calculate-total-nutrients', [NutrientCalculationController::class, 'calculateTotalNutrients']);
