@@ -193,32 +193,33 @@ class DishController extends Controller
      * Display the specified resource.
      */
     public function show(int $id)
-{
-    // Fetch the dish by its ID
-    $dish = Dish::findOrFail($id);
+    {
+        // Fetch the dish by its ID
+        $dish = Dish::findOrFail($id);
 
-    // Attempt to load products to check if the dish has any related products
-    $productsCount = $dish->products()->count();
+        // Attempt to load products to check if the dish has any related products
+        $productsCount = $dish->products()->count();
 
-    if ($productsCount > 0) {
-        // If the dish has related products, load them along with the pivot data
-        $dish->load([
-            'products' => function ($query) {
-                $query->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
-            }
-        ]);
-    } else {
-        // If no related products, load the nutrients directly
-        $dish->load([
-            'nutrients' => function($query) {
-                $query->withPivot('weight');
-            }
-        ]);
+        if ($dish->products->isNotEmpty()) {
+            $dish->products->each(function ($product) {
+                // Assuming the pivot data is loaded and includes 'nutrients'
+                // Check if the pivot data exists and unset 'nutrients'
+                if (isset($product->pivot->nutrients)) {
+                    unset($product->pivot->nutrients);
+                }
+            });
+        } else {
+            // If no related products, load the nutrients directly
+            $dish->load([
+                'nutrients' => function($query) {
+                    $query->withPivot('weight');
+                }
+            ]);
+        }
+
+        // Return the dish data as a JSON response
+        return response()->json($dish);
     }
-
-    // Return the dish data as a JSON response
-    return response()->json($dish);
-}
 
 
     /**
