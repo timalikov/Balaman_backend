@@ -87,7 +87,8 @@ class MenuController extends Controller
         $validatedData['status'] = 'pending';
 
         // Extract user ID from JWT token
-        $userId = Auth::id();
+        // $userId = Auth::id();
+        $userId = 1;
         $validatedData['user_id'] = $userId;
 
         $menu = Menu::create($validatedData);
