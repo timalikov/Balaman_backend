@@ -22,7 +22,7 @@ class Menu extends Model
     // Define the relationship with the User model
     public function user()
     {
-        return $this->belongsTo(User::class, 'id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function menuMealTimes()

@@ -21,12 +21,57 @@ class MenuController extends Controller
     /**
      * Display a listing of all menus.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $menus = Menu::with('user') 
-                    ->get();
+        // Validate the request
+        $request->validate([
+            'search' => 'string|nullable',
+            'menu_id' => 'integer|nullable', // Assuming you want to search by menu_id
+            'user_id' => 'integer|nullable', // Assuming you want to filter by user_id
+            'per_page' => 'integer|nullable',
+            'page' => 'integer|nullable'
+        ]);
 
-        return response()->json($menus);
+        // Check for specific menu ID search
+        if ($request->has('menu_id')) {
+            return $this->show($request->input('menu_id')); // Ensure you have a show method to handle this
+        }
+
+        // Start the query
+        $query = Menu::with('user');
+
+        // Handle the general search parameter
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->orWhereHas('user', function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%'); // Assuming 'name' is a searchable field in the User model
+                });
+            });
+        }
+
+        // Filter by user_id if provided
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->input('user_id'));
+        }
+
+        // Determine the number of menus per page
+        $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+
+        // Get the results with pagination
+        $menus = $query->paginate($perPage);
+
+        // Optional: Customize the response format if needed
+        return response()->json([
+            'current_page' => $menus->currentPage(),
+            'items_per_page' => $menus->perPage(),
+            'total_items' => $menus->total(),
+            'total_pages' => $menus->lastPage(),
+            'data' => $menus->items()
+        ]);
     }
     
 

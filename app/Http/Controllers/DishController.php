@@ -81,15 +81,15 @@ class DishController extends Controller
         $currentPage = $request->input('page', 1); // Default to 1 if not provided
 
         // Get the results with pagination
-        $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
+        $dishes = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
         // Optional: Customize the response format
         return response()->json([
-            'current_page' => $products->currentPage(),
-            'items_per_page' => $products->perPage(),
-            'total_items' => $products->total(),
-            'total_pages' => $products->lastPage(),
-            'data' => $products->items()
+            'current_page' => $dishes->currentPage(),
+            'items_per_page' => $dishes->perPage(),
+            'total_items' => $dishes->total(),
+            'total_pages' => $dishes->lastPage(),
+            'data' => $dishes->items()
         ]);
     }
 
