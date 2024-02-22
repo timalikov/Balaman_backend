@@ -34,7 +34,7 @@ class Product extends Model
 
     public function nutrients()
     {
-        return $this->belongsToMany(Nutrient::class, 'nutrients_products', 'product_id', 'nutrient_id');
+        return $this->belongsToMany(Nutrient::class, 'nutrients_products', 'product_id', 'nutrient_id')->withPivot('weight');
     }
 
     public function factors() {
