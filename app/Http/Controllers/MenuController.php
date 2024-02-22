@@ -98,7 +98,8 @@ class MenuController extends Controller
     public function show($id)
     {
         // Retrieve the menu details without loading the meal times relationship
-        $menu = Menu::where('menu_id', $id)->first();
+        $menu = Menu::with(['menuMealTimes.mealTime', 'menuMealTimes.mealDishes'])
+        ->findOrFail($id);
 
         if (!$menu) {
             return response()->json(['message' => 'Menu not found'], 404);
