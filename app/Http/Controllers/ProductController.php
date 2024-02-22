@@ -28,12 +28,21 @@ class ProductController extends Controller
             return $this->show($request->input('product_id'));
         }
 
-        // Continue with the regular search and filtering
-        $query = Product::with(['productCategory' => function($query) {
+        if ($request->has('product_category_id')) {
+            $query = Product::select(['product_id', 'name']); 
+        }
+        else {
+            // Continue with the regular search and filtering
+            $query = Product::with(['productCategory' => function($query) {
                 $query->select('product_category_id', 'name');
             }])
             ->select(['product_id', 'bls_code', 'name', 'description', 'product_category_id']);
+        }
 
+        // If filtering by product_category_id
+        if ($request->has('product_category_id')) {
+            $query->where('product_category_id', $request->input('product_category_id'));
+        }
 
         // Handle the general search parameter
         if ($request->has('search')) {
@@ -48,21 +57,6 @@ class ProductController extends Controller
             });
         }
 
-        // Filter by product_category_id if provided
-        if ($request->has('product_category_id')) {
-            $query->whereHas('productCategory', function ($q) use ($request) {
-                $q->where('product_category_id', $request->input('product_category_id'));
-            });
-        }
-
-        // // Determine the number of products per page
-        // $perPage = $request->input('per_page', 10); // Default to 10 if not provided
-
-        // // Get the results with pagination
-        // $products = $query->paginate($perPage);
-
-        // return response()->json($products);
-
         // Determine the number of products per page
         $perPage = $request->input('per_page', 10); // Default to 10 if not provided
         $currentPage = $request->input('page', 1); // Default to 1 if not provided
@@ -70,7 +64,6 @@ class ProductController extends Controller
         // Get the results with pagination
         $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-        // Optional: Customize the response format
         return response()->json([
             'current_page' => $products->currentPage(),
             'items_per_page' => $products->perPage(),
@@ -79,6 +72,7 @@ class ProductController extends Controller
             'data' => $products->items()
         ]);
     }
+
 
 
     /**

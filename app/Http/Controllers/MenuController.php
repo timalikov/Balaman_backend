@@ -194,6 +194,19 @@ class MenuController extends Controller
         ]);
     }
 
+    public function addDishToMealTime(Request $request, $menuId)
+    {
+        // Validate the incoming request parameters
+        $validatedData = $request->validate([
+            'mealTimeId' => 'required|integer',
+            'day_of_week' => 'required|integer',
+        ]);
+
+        // Check if the menu exists and belongs to the authenticated user
+        $menu = Menu::where('menu_id', $menuId)->where('user_id', Auth::id())->first();
+
+    }
+
 
     
 
