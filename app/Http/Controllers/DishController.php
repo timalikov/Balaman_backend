@@ -186,7 +186,14 @@ class DishController extends Controller
             
             $dish->products()->attach($productsData);
         } else {
+            $validatedData['price'] = $request->input('price');
+            $validatedData['weight'] = $request->input('weight', 0);
+            $validatedData['kilocalories'] = $request->input('kilocalories', 0);
+            $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
+
+
             $dish = Dish::create($validatedData);
+            
         }
 
         // Attach nutrients' totals to the dish
