@@ -22,13 +22,15 @@ return new class extends Migration
             $table->unsignedBigInteger('dish_category_id');
             $table->string('dish_category_code')->nullable();
 
-            $table->string('image_url')->nullable();
-            $table->boolean('has_relation_with_products')->default(false);
+            $table->float('price');
+            $table->float('kilocalories');
+            $table->float('kilocalories_with_fiber')->nullable();
             
             $table->integer('health_factor')->nullable();
 
-            $table->float('kilocalories');
-            $table->float('kilocalories_with_fiber')->nullable();
+            $table->string('image_url')->nullable();
+            $table->boolean('has_relation_with_products')->default(false);
+
 
             $table->foreign('dish_category_id')->references('dish_category_id')->on('dish_categories')->onDelete('cascade');
 
