@@ -13,9 +13,10 @@ class Dish extends Model
 
     protected $fillable = [
         'bls_code', 'name', 'description', 'recipe_description', 
-        'dish_category_id', 'dish_category_code', 'image_url', 
-        'has_relation_with_products', 'health_factor', 'kilocalories', 
-        'kilocalories_with_fiber'
+        'dish_category_id', 'dish_category_code',
+        'price', 'weight', 'kilocalories', 'kilocalories_with_fiber',
+        'image_url', 
+        'has_relation_with_products', 'health_factor'
     ];
 
     public function dishCategory()

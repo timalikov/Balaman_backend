@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('dish_category_code')->nullable();
 
             $table->float('price');
+            $table->float('weight', 8, 2);
             $table->float('kilocalories');
             $table->float('kilocalories_with_fiber')->nullable();
 
