@@ -12,11 +12,11 @@ use App\Models\MealDish;
 class MenuController extends Controller
 {
 
-    public function __construct()
-    {
-        // Assuming JWT authentication is done in the auth:api middleware
-        $this->middleware('auth:api');
-    }
+    // public function __construct()
+    // {
+    //     // Assuming JWT authentication is done in the auth:api middleware
+    //     $this->middleware('auth:api');
+    // }
 
     /**
      * Display a listing of all menus.
