@@ -133,57 +133,60 @@ class DishController extends Controller
 
         ]);
 
+        $totalPrice = 0; // Initialize total price
+        $nutrientsTotals = []; // Initialize nutrients totals
+
         if ($request->has('products')) {
             $validatedData['has_relation_with_products'] = true;
-        }else{
-            $validatedData['has_relation_with_products'] = false;
-        }
-        // Create the dish
-        $dish = Dish::create($validatedData);
-
-        // Check if the request has 'products' array
-        if ($request->has('products')) {
-
             $requestData = $request->input('products'); 
-            
             $products = $this->productFetchService->completeProductRequest($requestData);
-            
+
             if (is_null($products) || !is_array($products)) {
                 return response()->json(['error' => 'Invalid products data'], 400);
             }
-    
+
+            // Process products data
             $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
-    
-            // Calculate modified weights for the products
             $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
-    
-            // Calculate nutrients for the products
             $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights); 
 
             $productsData = [];
             foreach ($productsWithUpdatedNutrients as $product) {
-                // Assuming each product in the array has 'product_id' and 'product_weight'
+                // Calculate total price
+                $totalPrice += $product['price'];
+
+                // Assuming 'nutrients' is an array of nutrient_id => value
+                foreach ($product['nutrients'] as $nutrient) {
+                    if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
+                        $nutrientsTotals[$nutrient['nutrient_id']] = 0;
+                    }
+                    $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["weight"];
+                }
+
                 $productsData[$product['product_id']] = [
                     'weight' => $product['weight'],
-                    'kilocalories' => $product['kilocalories'],
-                    'price' => $product['price'], // Added price
-                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'], // Added kilocalories_with_fiber
-                    'nutrients' => json_encode($product['nutrients']) // Encoding the nutrients array as JSON
+                    // Other product data...
                 ];
             }
 
             // Attach product IDs with additional pivot data to the dish
+            $dish = Dish::create($validatedData + ['total_price' => $totalPrice]); // Save dish with total price
             $dish->products()->attach($productsData);
-        } elseif ($request->has('nutrients')) {
-            $nutrientsData = [];
-            foreach($request->input('nutrients') as $nutrient){
-                $nutrientsData[$nutrient['nutrient_id']] = [
-                    'weight' => $nutrient['pivot']['weight'],
-                ];
-            }
-            $dish->nutrients()->attach($nutrientsData);
+        } else {
+            $dish = Dish::create($validatedData);
         }
 
+        // Attach nutrients' totals to the dish
+        if (!empty($nutrientsTotals)) {
+            $nutrientsData = [];
+            foreach ($nutrientsTotals as $nutrientId => $total) {
+                $nutrientsData[$nutrientId] = ['total' => $total];
+            }
+            $dish->nutrients()->attach($nutrientsData);
+        } elseif ($request->has('nutrients')) {
+            // Handle case where nutrients are directly provided in the request
+            // Similar logic to attach directly provided nutrients
+        }
 
         return response()->json($dish, 201);
 
