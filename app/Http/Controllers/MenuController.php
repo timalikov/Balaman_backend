@@ -7,6 +7,9 @@ use App\Models\Menu;
 use Illuminate\Support\Facades\Auth;
 use App\Models\MenuMealTime;
 use App\Models\MealDish;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
 
 
 class MenuController extends Controller
@@ -98,72 +101,133 @@ class MenuController extends Controller
 
     public function show($id)
     {
-        // Retrieve the menu details without loading the meal times relationship
         $menu = Menu::with(['menuMealTimes.mealTime', 'menuMealTimes.mealDishes'])
-        ->findOrFail($id);
+                    ->findOrFail($id);
 
-        if (!$menu) {
-            return response()->json(['message' => 'Menu not found'], 404);
+        $weeks = [];
+
+        foreach ($menu->menuMealTimes as $menuMealTime) {
+            $week = $menuMealTime->week;
+            $dayOfWeek = $menuMealTime->day_of_week;
+            $mealTimeId = $menuMealTime->meal_time_id;
+
+            if (!isset($weeks[$week])) {
+                $weeks[$week] = [];
+            }
+
+            if (!isset($weeks[$week][$dayOfWeek])) {
+                $weeks[$week][$dayOfWeek] = [];
+            }
+
+            // Check if the mealTimeId already exists for that day
+            if (!isset($weeks[$week][$dayOfWeek][$mealTimeId])) {
+                // Initialize the mealTime with its dishes if it doesn't exist
+                $weeks[$week][$dayOfWeek][$mealTimeId] = [
+                    'mealTime' => $menuMealTime->mealTime->toArray(),
+                    'dishes' => []
+                ];
+            }
+
+            // Append dishes to the existing mealTime
+            $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'] = array_merge(
+                $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'],
+                $menuMealTime->mealDishes->toArray()
+            );
         }
 
-        // Calculate the number of unique weeks without loading the meal times array
-        $numberOfWeeks = MenuMealTime::where('menu_id', $id)
-                            ->select('week')
-                            ->distinct()
-                            ->count();
+        // Sort weeks and days within weeks, and reset the mealTime keys to ensure a list format
+        ksort($weeks);
+        foreach ($weeks as $week => &$days) {
+            ksort($days);
+            foreach ($days as $day => &$mealTimes) {
+                $mealTimes = array_values($mealTimes); // Reset keys to ensure list format for JSON
+            }
+        }
 
-        // Prepare the response data, excluding the menu_meal_times array
-        $response = $menu->toArray();
-        $response['number_of_weeks'] = $numberOfWeeks;
+        $response = [
+            'menu_id' => $menu->menu_id,
+            'name' => $menu->name,
+            'description' => $menu->description,
+            'user_id' => $menu->user_id,
+            'status' => $menu->status,
+            'season' => $menu->season,
+            'created_at' => $menu->created_at,
+            'updated_at' => $menu->updated_at,
+            'weeks' => $weeks,
+        ];
 
         return response()->json($response);
     }
 
 
-    public function createMealPlan(Request $request, $menuId) {
-        $validatedData = $request->validate([
+
+
+    public function createMealPlan(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'menu_id' => 'required|integer|exists:menus,menu_id',
+            'week' => 'required|integer|min:1',
+            'day_of_week' => 'required|integer|between:1,7',
             'meal_times' => 'required|array',
-            'meal_times.*.day_of_week' => 'required|integer|between:1,7',
-            'meal_times.*.week' => 'required|integer|min:1',
-            'meal_times.*.meal_time_id' => 'required|integer',
-            'meal_times.*.dishes' => 'sometimes|array',
-            'meal_times.*.dishes.*.dish_id' => 'required_with:meal_times.*.dishes|integer',
-            'meal_times.*.dishes.*.weight' => 'required_with:meal_times.*.dishes|numeric',
+            'meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'meal_times.*.dishes' => 'required|array',
+            'meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
+            'meal_times.*.dishes.*.weight' => 'required|numeric',
         ]);
         
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+        
+        $validatedData = $validator->validated();
+                
+        $menuId = $validatedData['menu_id'];
     
-        // Check if the menu exists and belongs to the authenticated user
-        $menu = Menu::where('menu_id', $menuId)->where('user_id', Auth::id())->first();
-    
+        // $menu = Menu::where('menu_id', $menuId)->where('user_id', Auth::id())->first();
+        $menu = Menu::where('menu_id', $menuId)->first();
+
         if (!$menu) {
             return response()->json(['message' => 'Menu not found or access denied'], 404);
         }
-
-        $menuId = $request->menuId;
-
-        foreach ($validatedData['meal_times'] as $mealTimeData) {
-            // Assuming MenuMealTime has a relationship setup with Menu
-            $menuMealTime = MenuMealTime::create([
-                'menu_id' => $menuId,
-                'day_of_week' => $mealTimeData['day_of_week'],
-                'week' => $mealTimeData['week'],
-                'meal_time_id' => $mealTimeData['meal_time_id'],
-                // Add other necessary fields
-            ]);
-
-            if (!empty($mealTimeData['dishes'])) {
-                foreach ($mealTimeData['dishes'] as $dish) {
-                    $menuMealTime->mealDishes()->create([
-                        'dish_id' => $dish['dish_id'],
-                        'weight' => $dish['weight'],
+    
+        DB::beginTransaction();
+        try {
+            foreach ($validatedData['meal_times'] as $mealTimeData) {
+                $menuMealTime = MenuMealTime::firstOrCreate([
+                    'menu_id' => $menuId,
+                    'week' => $validatedData['week'],
+                    'day_of_week' => $validatedData['day_of_week'],
+                    'meal_time_id' => $mealTimeData['meal_time_id'],
+                ]);
+    
+                foreach ($mealTimeData['dishes'] as $dishData) {
+                    $menuMealTime->mealDishes()->updateOrCreate([
+                        'dish_id' => $dishData['dish_id'],
+                        // You may add more conditions here if necessary
+                    ], [
+                        'weight' => $dishData['weight'],
+                        // Include other dish attributes here if necessary
                     ]);
                 }
             }
-        }
-        $menuMealTime->load('mealDishes');
     
-        return response()->json($menuMealTime, 201);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create daily meal plan', 'error' => $e->getMessage()], 500);
+        }
+    
+        // Reload the menu to include the newly added meal times and dishes
+        $menu->load(['menuMealTimes' => function ($query) use ($validatedData) {
+            $query->where('week', $validatedData['week'])
+                  ->where('day_of_week', $validatedData['day_of_week']);
+        }, 'menuMealTimes.mealTime', 'menuMealTimes.mealDishes']);
+    
+        return response()->json(['message' => 'Daily meal plan created successfully', 'menu' => $menu], 201);
     }
+    
+    
+    
+    
 
     public function getMealTimesByWeekAndDay(Request $request, $menuId)
     {
@@ -195,18 +259,44 @@ class MenuController extends Controller
         ]);
     }
 
-    public function addDishToMealTime(Request $request, $menuId)
+    public function addDishToMenu(Request $request)
     {
-        // Validate the incoming request parameters
-        $validatedData = $request->validate([
-            'mealTimeId' => 'required|integer',
-            'day_of_week' => 'required|integer',
+        // Validate the incoming request data
+        $validated = $request->validate([
+            'menu_id' => 'required|exists:menus,id',
+            'meal_time_id' => 'required|exists:meal_times,id',
+            'week' => 'required|integer|min:1',
+            'day_of_week' => 'required|integer|between:1,7',
+            'dish' => 'required|array',
+            'dish.name' => 'required|string',
+            'dish.weight' => 'required|numeric',
         ]);
 
-        // Check if the menu exists and belongs to the authenticated user
-        $menu = Menu::where('menu_id', $menuId)->where('user_id', Auth::id())->first();
+        // Attempt to find the specific MenuMealTime entry
+        $menuMealTime = MenuMealTime::where('menu_id', $validated['menu_id'])
+                                    ->where('meal_time_id', $validated['meal_time_id'])
+                                    ->where('week', $validated['week'])
+                                    ->where('day_of_week', $validated['day_of_week'])
+                                    ->first();
 
+        if (!$menuMealTime) {
+            // Option to create the meal time if it doesn't exist
+            // or return an error message depending on your application logic
+            return response()->json(['message' => 'Specified meal time not found for the given day and week'], 404);
+        }
+
+        // Add the dish to the found or created menu meal time
+        $dish = $menuMealTime->mealDishes()->create($validated['dish']);
+
+        // Optionally, reload the meal time with dishes if you want to return the updated list
+        $menuMealTime->load('mealDishes');
+
+        return response()->json([
+            'message' => 'Dish added successfully to the specified day and meal time',
+            'mealTime' => $menuMealTime,
+        ]);
     }
+
 
 
     
