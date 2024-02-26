@@ -229,13 +229,17 @@ class MenuController extends Controller
     
     
 
-    public function getMealTimesByWeekAndDay(Request $request, $menuId)
+    public function getMealTimesByWeekAndDay(Request $request)
     {
         // Validate the incoming request parameters
         $validatedData = $request->validate([
+            'menu_id' => 'required|integer|exists:menus,menu_id',
             'week' => 'required|integer',
             'day_of_week' => 'required|integer',
         ]);
+
+        $menuId = $validatedData['menu_id'];
+
          // Retrieve meal times and dishes for the specified menu, week, and day of the week
         $mealTimes = MenuMealTime::with(['mealDishes'])
                     ->where('menu_id', $menuId)

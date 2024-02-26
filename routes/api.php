@@ -99,4 +99,4 @@ Route::apiResource(
 );
 
 
-Route::post('/menus/{menuId}/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
+Route::post('/menus/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
