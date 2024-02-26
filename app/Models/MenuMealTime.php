@@ -39,7 +39,8 @@ class MenuMealTime extends Model
 
     public function mealDishes()
     {
-        return $this->hasMany(MealDish::class, 'menu_meal_time_id');
+        return $this->belongsToMany(Dish::class, 'meal_dishes', 'menu_meal_time_id', 'dish_id')
+                    ->withPivot('weight');
     }
 
 

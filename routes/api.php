@@ -91,12 +91,15 @@ Route::post('/generate-technological-card', [TechnologicalCardController::class,
 Route::post('/calculate-weight', [WeightCalculationController::class, 'process']);
 
 
-Route::post('/menus/meal-plans', [MenuController::class, 'createMealPlan']);
+Route::delete('/menus/remove-dish', [MenuController::class, 'removeDishFromMenu']);
 
 Route::apiResource(
     'menus',
     MenuController::class
 );
 
+Route::post('/menus/meal-plans', [MenuController::class, 'createMealPlan']);
 
 Route::post('/menus/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
+
+Route::post('/menus/add-dish', [MenuController::class, 'addDishToMenu']);
