@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('nutrients', function (Blueprint $table) {
             $table->id('nutrient_id'); 
             $table->string('name');
-            $table->string('code')->unique()->nullable();
+            $table->string('measurement_unit'); 
             $table->timestamps();
         });
     }

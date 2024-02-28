@@ -13,7 +13,7 @@ class Nutrient extends Model
      
     protected $fillable = [
         'name',
-        'code',
+        'measurement_unit',
     ];
 
     public function products()
