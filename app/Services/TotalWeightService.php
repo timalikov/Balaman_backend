@@ -1,47 +1,71 @@
 <?php
 
-
 namespace App\Services;
-use App\Models\Product;
-use App\Models\Factor;
+
 use App\Models\Nutrient;
+use Illuminate\Support\Collection;
 
 class TotalWeightService 
 {
-
-    public function calculateTotals(array $products)
+    public function calculateTotals(array $products): array
     {
-        $nutrientMap = [];
+        $nutrientMap = new Collection();
 
-        $total_price = 0;
-        $total_weight = 0;
-        $total_kilocalories = 0;
-        $total_kilocalories_with_fiber = 0;
-
-        foreach($products as &$productData){
-            if (isset($productData['weight'], $productData['price'], $productData['kilocalories'], $productData['kilocalories_with_fiber'])) {
-                $total_price += $productData['price'];
-                $total_weight += $productData['weight'];
-                $total_kilocalories += $productData['kilocalories'];
-                $total_kilocalories_with_fiber += $productData['kilocalories_with_fiber'];
-            }
-            if (isset($productData['nutrients'])){
-                foreach ($productData['nutrients'] as $nutrient) {
-                    if (isset($nutrient['name']) && isset($nutrient['pivot']['weight'])) {
-                        $nutrientMap[$nutrient['name']] = (isset($nutrientMap[$nutrient['name']]) ? $nutrientMap[$nutrient['name']] : 0) + $nutrient['pivot']['weight'];
-                    }
-                }
-            }
-        }
-        unset($productData); // Unset reference to the last element
-
-        return [
-            'total_price' => $total_price,
-            'total_weight' => $total_weight,
-            'total_kilocalories' => $total_kilocalories,
-            'total_kilocalories_with_fiber' => $total_kilocalories_with_fiber,
-            'nutrient_map' => $nutrientMap
+        $totals = [
+            'total_price' => 0,
+            'total_weight' => 0,
+            'total_kilocalories' => 0,
+            'total_kilocalories_with_fiber' => 0,
         ];
+
+        foreach ($products as $productData) {
+            $this->processProductData($productData, $totals, $nutrientMap);
+        }
+
+        // Round weights in nutrientMap after all processing
+        $nutrientMap->transform(function ($nutrient) {
+            $nutrient->weight = round($nutrient->weight, 2);
+            return $nutrient;
+        });
+
+        $totals['nutrient_map'] = $nutrientMap->values(); // Convert to array values if needed
+
+        return $totals;
     }
 
+    protected function processProductData(array $productData, array &$totals, Collection $nutrientMap): void
+    {
+        if (isset($productData['weight'], $productData['price'], $productData['kilocalories'], $productData['kilocalories_with_fiber'])) {
+            $totals['total_price'] += $productData['price'];
+            $totals['total_weight'] += $productData['weight'];
+            $totals['total_kilocalories'] += $productData['kilocalories'];
+            $totals['total_kilocalories_with_fiber'] += $productData['kilocalories_with_fiber'];
+        }
+
+        if (isset($productData['nutrients'])) {
+            foreach ($productData['nutrients'] as $nutrientData) {
+                $this->aggregateNutrient($nutrientData, $nutrientMap);
+            }
+        }
+    }
+
+    protected function aggregateNutrient(array $nutrientData, Collection $nutrientMap): void
+    {
+        if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
+            $name = $nutrientData['name'];
+            $weight = $nutrientData['pivot']['weight'];
+            $unit = $nutrientData['measurement_unit'];
+
+            if (!$nutrientMap->has($name)) {
+                $nutrientMap->put($name, new Nutrient([
+                    'name' => $name,
+                    'weight' => 0,
+                    'unit' => $unit,
+                ]));
+            }
+            
+            $nutrient = $nutrientMap->get($name);
+            $nutrient->weight += $weight;
+        }
+    }
 }

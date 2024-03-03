@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             FactorsTableSeeder::class,
             WeightLossesTableSeeder::class,
 
-            NutrientLossesByCategoriesTableSeeder::class,
+            NutrientLossesByProductsTableSeeder::class,
             NutrientsProductsTableSeeder::class,
 
             PermissionsTableSeeder::class,

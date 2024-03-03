@@ -7,7 +7,7 @@ use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
 use App\Services\TotalWeightService;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Log;
 
 
 class NutrientCalculationController extends Controller
@@ -40,11 +40,15 @@ class NutrientCalculationController extends Controller
 
         $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
+        Log::info('Processed Products kilogram: ' . json_encode($processedProducts));
+
         // Calculate modified weights for the products
         $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
 
+        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
+
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights);
+        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
 
         $totals = $this->totalWeightService->calculateTotals($productsWithUpdatedNutrients);
 
@@ -83,9 +87,11 @@ class NutrientCalculationController extends Controller
 
         // Calculate modified weights for the products
         $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+      
+        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
 
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights);
+        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
 
         // Prepare the response
         $processedProductDetails = $productsWithUpdatedNutrients[0] ?? null;

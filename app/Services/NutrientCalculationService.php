@@ -57,11 +57,11 @@ class NutrientCalculationService
         foreach ($products as &$productData) {
             if (isset($productData['factor_ids'], $productData['nutrients'])) {
                 $factorIds = $productData['factor_ids'];
-                $productCategoryId = $productData['product_category_id'];
+                $productId = $productData['product_id'];
 
                 // Iterate over each nutrient and apply the coefficient if available
                 foreach ($productData['nutrients'] as &$nutrient) {
-                    $nutrientCoefficient = $this->getNutrientCoefficients($productCategoryId, $factorIds, $nutrient['nutrient_id']);
+                    $nutrientCoefficient = $this->getNutrientCoefficients($productId, $factorIds, $nutrient['nutrient_id']);
 
                     // Check if a coefficient exists for the nutrient
                     if ($nutrientCoefficient !== null) {
@@ -83,8 +83,8 @@ class NutrientCalculationService
     {
         $coefficientProduct = 1;
         foreach($factorIds as $factorId){
-            $coefficient = \DB::table('nutrient_losses_by_categories') // Use the table name directly
-                            ->where('product_category_id', $productCategoryId)
+            $coefficient = \DB::table('nutrient_losses_by_products') // Use the table name directly
+                            ->where('product_id', $productCategoryId)
                             ->where('factor_id', $factorId)
                             ->where('nutrient_id', $nutrientId)
                             ->value('coefficient'); // Assuming 'coefficient' is the column name

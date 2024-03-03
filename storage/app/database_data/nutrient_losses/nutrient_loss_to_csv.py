@@ -10,7 +10,7 @@ def percent_to_coefficient(value):
             percent_value = value
         else:
             return value
-        return round(1 + percent_value / 100, 2)
+        return round(1 - percent_value / 100, 2)
     except ValueError:
         return value
 
@@ -32,7 +32,7 @@ for i in range(1, 27):
         third_column_copy = df[third_column_header].copy()
         df[third_column_header] = third_column_header
         df[str(third_column_header) + '_copy'] = third_column_copy
-        df.columns = ['product_category_id', 'factor_id', 'nutrient_id', 'coefficient'] + df.columns.tolist()[4:]
+        df.columns = ['product_id', 'factor_id', 'nutrient_id', 'coefficient'] + df.columns.tolist()[4:]
 
         third_column_name = df.columns[3]
         df[third_column_name] = df[third_column_name].apply(percent_to_coefficient)

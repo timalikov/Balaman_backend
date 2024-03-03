@@ -22,7 +22,7 @@ class WeightCalculationService
             // Apply the coefficient to the weight of each nutrient in the micros array
             foreach ($productData['nutrients'] as &$nutrient) {
                 if (isset($nutrient['pivot']['weight']) && is_numeric($nutrient['pivot']['weight'])) {
-                    $nutrient['pivot']['weight'] *= $weightCoefficient;
+                    $nutrient['pivot']['weight'] = round($nutrient['pivot']['weight'] * $weightCoefficient, 2);
                 }
             }
             
