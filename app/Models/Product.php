@@ -49,6 +49,15 @@ class Product extends Model
 
     }
 
+    /**
+     * Get the weight loss entries associated with the product.
+     */
+    public function factorsWithoutPivot()
+    {
+        return $this->belongsToMany(Factor::class, 'weight_losses', 'product_id', 'factor_id')
+                    // Normally, you might use ->withPivot('coefficient') here, but it's omitted to avoid including pivot data
+                    ->select(['factors.factor_id', 'factors.name']); // Adjust the selected fields as necessary
+    }
 
 
 
