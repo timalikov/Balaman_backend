@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Nutrient;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class TotalWeightService 
 {
@@ -51,6 +52,7 @@ class TotalWeightService
 
     protected function aggregateNutrient(array $nutrientData, Collection $nutrientMap): void
     {
+        Log::info($nutrientData['measurement_unit'] . 'klaramen');
         if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
             $name = $nutrientData['name'];
             $weight = $nutrientData['pivot']['weight'];
@@ -60,7 +62,7 @@ class TotalWeightService
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
-                    'unit' => $unit,
+                    'measurement_unit' => $unit,
                 ]));
             }
             
