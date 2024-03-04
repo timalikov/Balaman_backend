@@ -16,7 +16,7 @@ class Dish extends Model
         'dish_category_id', 'dish_category_code',
         'price', 'weight', 'kilocalories', 'kilocalories_with_fiber',
         'image_url', 
-        'has_relation_with_products', 'health_factor'
+        'has_relation_with_products', 'health_factor', 'protein', 'fat', 'carbohydrate'
     ];
 
     public function dishCategory()

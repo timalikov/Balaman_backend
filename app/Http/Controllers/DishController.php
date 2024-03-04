@@ -133,6 +133,12 @@ class DishController extends Controller
         $totalKilocaloriesWithFiber = 0;
         $nutrientsTotals = []; // Initialize nutrients totals
 
+        // macros
+        $totalProtein = 0;
+        $totalFat = 0;
+        $totalCarbohydrate = 0;
+
+
         if ($request->has('products')) {
 
             $validatedData['has_relation_with_products'] = true;
@@ -151,35 +157,57 @@ class DishController extends Controller
 
             $productsData = [];
             foreach ($productsWithUpdatedNutrients as $product) {
-
-                // Calculate total price
                 $totalPrice += $product['price'];
                 $totalWeight += $product['weight'];
                 $totalKilocalories += $product['kilocalories'];
                 $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
-
-                // Assuming 'nutrients' is an array of nutrient_id => value
+            
                 foreach ($product['nutrients'] as $nutrient) {
-                    if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
-                        $nutrientsTotals[$nutrient['nutrient_id']] = 0;
+                    // Exclude specific macronutrients by their IDs
+                    if (!in_array($nutrient['nutrient_id'], [2, 3, 4])) {
+                        // Aggregate totals for other nutrients
+                        if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
+                            $nutrientsTotals[$nutrient['nutrient_id']] = 0;
+                        }
+                        $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["pivot"]['weight'];
+                    } else {
+                        // Sum up macronutrients separately
+                        switch ($nutrient['nutrient_id']) {
+                            case 2: // Assuming ID 2 is for protein
+                                $totalProtein += $nutrient["pivot"]['weight'];
+                                break;
+                            case 3: // Assuming ID 3 is for fat
+                                $totalFat += $nutrient["pivot"]['weight'];
+                                break;
+                            case 4: // Assuming ID 4 is for carbohydrate
+                                $totalCarbohydrate += $nutrient["pivot"]['weight'];
+                                break;
+                        }
                     }
-                    $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["pivot"]['weight'];
                 }
-
+                
+            
                 $productsData[$product['product_id']] = [
                     'weight' => $product['weight'],
                     'kilocalories' => $product['kilocalories'],
-                    'price' => $product['price'], // Added price
-                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'], // Added kilocalories_with_fiber
-                    'nutrients' => json_encode($product['nutrients']) // Encoding the nutrients array as JSON
+                    'price' => $product['price'],
+                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'],
+                    'nutrients' => json_encode($product['nutrients'])
                 ];
             }
+            
 
         
             $validatedData['price'] = $totalPrice;
             $validatedData['weight'] = $totalWeight;
             $validatedData['kilocalories'] = $totalKilocalories;
             $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
+
+            // macros
+            $validatedData['protein'] = $totalProtein;
+            $validatedData['fat'] = $totalFat;
+            $validatedData['carbohydrate'] = $totalCarbohydrate;
+
 
 
             $dish = Dish::create($validatedData);
@@ -191,30 +219,39 @@ class DishController extends Controller
             $validatedData['kilocalories'] = $request->input('kilocalories', 0);
             $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
 
+            // macros
+            $validatedData['protein'] = $totalProtein;
+            $validatedData['fat'] = $totalFat;
+            $validatedData['carbohydrate'] = $totalCarbohydrate;
+
 
             $dish = Dish::create($validatedData);
             
         }
 
         // Attach nutrients' totals to the dish
+        $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
+
         if (!$request->has('nutrients')) {
             $nutrientsData = [];
             foreach ($nutrientsTotals as $nutrientId => $total) {
-                // Ensure that 'weight' is provided for each nutrient
-                // Assuming $total is the weight you want to assign
-                $nutrientsData[$nutrientId] = ['weight' => $total];
+                // Skip excluded nutrients
+                if (!in_array($nutrientId, $excludedNutrientIds)) {
+                    $nutrientsData[$nutrientId] = ['weight' => $total];
+                }
             }
             $dish->nutrients()->attach($nutrientsData);
         } elseif ($request->has('nutrients')) {
             $nutrientsData = [];
             foreach ($request->input('nutrients') as $nutrient) {
-                // Make sure 'weight' is provided and is not null
-                $nutrientsData[$nutrient['nutrient_id']] = [
-                    'weight' => $nutrient['weight'],
-                ];
+                // Skip excluded nutrients
+                if (!in_array($nutrient['nutrient_id'], $excludedNutrientIds)) {
+                    $nutrientsData[$nutrient['nutrient_id']] = ['weight' => $nutrient['weight']];
+                }
             }
             $dish->nutrients()->attach($nutrientsData);
         }
+
 
 
         return response()->json($dish, 201);
