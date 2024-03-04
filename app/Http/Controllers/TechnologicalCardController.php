@@ -43,9 +43,11 @@ class TechnologicalCardController extends Controller
 
         // Calculate modified weights for the products
         $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+        
+        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
 
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights);
+        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
 
         return $this->technologicalCardGeneratorService->generateTechnologicalCard($productsWithUpdatedNutrients);
     }
