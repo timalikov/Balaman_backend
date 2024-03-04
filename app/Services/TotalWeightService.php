@@ -17,6 +17,10 @@ class TotalWeightService
             'total_weight' => 0,
             'total_kilocalories' => 0,
             'total_kilocalories_with_fiber' => 0,
+            // Initialize macronutrients with default values
+            'total_protein' => 0,
+            'total_fat' => 0,
+            'total_carbohydrate' => 0,
         ];
 
         foreach ($products as $productData) {
@@ -29,10 +33,34 @@ class TotalWeightService
             return $nutrient;
         });
 
+        // Extract macronutrients' values and add them to totals
+        $this->addMacronutrientsToTotals($nutrientMap, $totals);
+
         $totals['nutrient_map'] = $nutrientMap->values(); // Convert to array values if needed
 
         return $totals;
     }
+
+    protected function addMacronutrientsToTotals(Collection $nutrientMap, array &$totals): void
+    {
+        // Map the specific database names to the totals keys
+        $macronutrientsMap = [
+            'Яичный белок (белок)' => 'total_protein',
+            'Жиры' => 'total_fat',
+            'Углеводы, абсорбируемые' => 'total_carbohydrate',
+        ];
+
+        foreach ($macronutrientsMap as $dbName => $totalKey) {
+            if ($nutrientMap->has($dbName)) {
+                $nutrient = $nutrientMap->get($dbName);
+                // Assuming the weight is the total amount of each macronutrient
+                $totals[$totalKey] = $nutrient->weight;
+                // Remove the macronutrient from nutrientMap after adding its total
+                $nutrientMap->forget($dbName);
+            }
+        }
+    }
+
 
     protected function processProductData(array $productData, array &$totals, Collection $nutrientMap): void
     {
