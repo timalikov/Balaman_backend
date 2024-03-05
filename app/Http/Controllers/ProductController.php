@@ -39,13 +39,14 @@ class ProductController extends Controller
 
         // Handle the general search parameter
         if ($request->has('search')) {
-            $searchTerm = $request->input('search');
+            $searchTerm = strtolower($request->input('search'));
+            $searchTerm = str_replace(' ', '', $searchTerm); // Remove spaces from the search term
 
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                $q->whereRaw('REPLACE(LOWER(name), \' \', \'\') LIKE ?', ['%' . $searchTerm . '%'])
+                ->orWhereRaw('REPLACE(LOWER(description), \' \', \'\') LIKE ?', ['%' . $searchTerm . '%'])
                 ->orWhereHas('productCategory', function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', '%' . $searchTerm . '%');
+                    $q->whereRaw('REPLACE(LOWER(name), \' \', \'\') LIKE ?', ['%' . $searchTerm . '%']);
                 });
             });
         }
