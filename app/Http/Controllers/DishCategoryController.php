@@ -82,6 +82,21 @@ class DishCategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // Find the dish category by its custom primary key
+        $dishCategory = DishCategory::where('dish_category_id', $id)->first();
+
+        // Check if the dish category was found
+        if (!$dishCategory) {
+            return response()->json(['message' => 'Dish category not found.'], 404); // Dish category not found
+        }
+
+        // Attempt to delete the dish category
+        try {
+            $dishCategory->delete();
+            return response()->json(['message' => 'Dish category deleted successfully.'], 200); // Successfully deleted
+        } catch (\Exception $e) {
+            // If there's an exception (e.g., foreign key constraint fails), return an error message
+            return response()->json(['message' => 'Failed to delete the dish category. It may be in use.'], 500);
+        }
     }
 }

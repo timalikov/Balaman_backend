@@ -16,30 +16,24 @@ class DishCategoriesTableSeeder extends Seeder
         //write seeder
         $dishCategories = [
             [
-                'dish_category_id' => 1,
                 'name' => 'Супы',
             ],
             [
-                'dish_category_id' => 2,
                 'name' => 'Горячие блюда',
             ],
             [
-                'dish_category_id' => 3,
                 'name' => 'Гарниры',
                 
             ],
             [
-                'dish_category_id' => 4,
                 'name' => 'Салаты',
         
             ],
             [
-                'dish_category_id' => 5,
                 'name' => 'Десерты',
                 
             ],
             [
-                'dish_category_id' => 6,
                 'name' => 'Напитки',
                 
             ],
