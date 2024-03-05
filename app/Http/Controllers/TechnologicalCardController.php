@@ -39,16 +39,17 @@ class TechnologicalCardController extends Controller
             return response()->json(['error' => 'Invalid products data'], 400);
         }
 
-        $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+        $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-        // Calculate modified weights for the products
-        $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
-        
-        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
+        $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeight($weightLossAfterColdProcessing);
+
+        $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
+        $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
-        return $this->technologicalCardGeneratorService->generateTechnologicalCard($productsWithUpdatedNutrients);
+        return $this->technologicalCardGeneratorService->generateTechnologicalCard($nutrientLossAfterThermalProcessing);
     }
 }

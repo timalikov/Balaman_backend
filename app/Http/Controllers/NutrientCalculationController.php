@@ -38,19 +38,18 @@ class NutrientCalculationController extends Controller
             return response()->json(['error' => 'Invalid products data'], 400);
         }
 
-        $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+        $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-        Log::info('Processed Products kilogram: ' . json_encode($processedProducts));
+        $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
 
-        // Calculate modified weights for the products
-        $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeight($weightLossAfterColdProcessing);
 
-        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
+        $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
+        $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
-        $totals = $this->totalWeightService->calculateTotals($productsWithUpdatedNutrients);
+        $totals = $this->totalWeightService->calculateTotals($nutrientLossAfterThermalProcessing);
 
         // Prepare the response
         $response = [
@@ -83,18 +82,19 @@ class NutrientCalculationController extends Controller
             return response()->json(['error' => 'Invalid products data'], 400);
         }
 
-        $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+        $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-        // Calculate modified weights for the products
-        $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
-      
-        $productsWithUpdatedWeights1 = $this->weightCalculationService->calculateNutrientsForCustomWeight($productsWithUpdatedWeights);
+        $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeight($weightLossAfterColdProcessing);
+
+        $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
         // Calculate nutrients for the products
-        $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights1);
+        $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
         // Prepare the response
-        $processedProductDetails = $productsWithUpdatedNutrients[0] ?? null;
+        $processedProductDetails = $nutrientLossAfterThermalProcessing[0] ?? null;
 
         // Return the processed product details directly.
         return response()->json($processedProductDetails);
