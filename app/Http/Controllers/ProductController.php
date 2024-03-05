@@ -37,7 +37,26 @@ class ProductController extends Controller
             ])
             ->select(['product_id', 'bls_code', 'name', 'description', 'product_category_id']);
 
-        // Existing search and filter logic remains unchanged
+        // Handle the general search parameter
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->orWhereHas('productCategory', function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%');
+                });
+            });
+        }
+
+        // Filter by product_category_id if provided
+        if ($request->has('product_category_id')) {
+            $query->whereHas('productCategory', function ($q) use ($request) {
+                $q->where('product_category_id', $request->input('product_category_id'));
+            });
+        }
+
 
         // Finalize the query with pagination
         $perPage = $request->input('per_page', 10);
