@@ -9,11 +9,11 @@ class DishCategory extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'category_id';
+    protected $primaryKey = 'dish_category_id';
 
     protected $fillable = [
         'name',
-        'code',
+        'code'
     ];
 
     

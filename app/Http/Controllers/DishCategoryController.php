@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DishCategory;
+use Illuminate\Support\Facades\Validator;
 
 class DishCategoryController extends Controller
 {
@@ -12,8 +13,9 @@ class DishCategoryController extends Controller
      */
     public function index()
     {
-        //
-        $dishCategories = DishCategory::get();
+        // Fetch all dish categories
+        $dishCategories = DishCategory::select('dish_category_id', 'name')->get();
+
         return response()->json($dishCategories);
     }
 
@@ -30,7 +32,25 @@ class DishCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:100|unique:dish_categories,name', // Ensuring name is required, a string, not too long, and unique
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422); // Return validation errors with 422 Unprocessable Entity status code
+        }
+
+        // Create new DishCategory instance and save it to the database
+        $dishCategory = new DishCategory();
+        $dishCategory->name = $request->name;
+        $dishCategory->save();
+
+        
+        // Return the newly created dish category with a 201 Created status code
+        return response()->json($dishCategory, 201);
+
     }
 
     /**

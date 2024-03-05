@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dish_categories', function (Blueprint $table) {
-            $table->id('dish_category_id');
+            $table->bigIncrements('dish_category_id'); // Ensures auto-increment
             $table->string('name');
             $table->string('code')->unique()->nullable();
             $table->timestamps();
