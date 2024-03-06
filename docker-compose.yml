@@ -39,6 +39,30 @@ services:
     networks:
       - balaman
 
+  nginx:
+        image: nginx:alpine
+        volumes:
+            - ./:/var/www:delegated
+            - ./nginx/:/etc/nginx/conf.d:delegated
+            - ./nginx/vhosts:/etc/nginx/vhosts:delegated
+            - ./nginx/logs:/var/log/nginx:delegated
+            - ./certbot/www:/var/www/certbot/:ro
+            - ./certbot/conf/:/etc/nginx/ssl/:ro
+        depends_on:
+            - php
+        networks:
+            - balaman
+        ports:
+            - "8081:80"
+            - "8443:443"
+            
+    certbot:
+        image: certbot/certbot:latest
+        volumes:
+            - ./certbot/www/:/var/www/certbot/:rw
+        networks:
+            - balaman
+
 volumes:
   db-data:
 
