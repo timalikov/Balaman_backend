@@ -15,20 +15,15 @@ return [
     |
     */
 
+
     'paths' => ['*'],
-
     'allowed_methods' => ['*'],
-
-    'allowed_origins' => ['*'],
-
-    'allowed_origins_patterns' => ['*'],
-
+    'allowed_origins' => ['http://199.36.158.100'], // Assuming the client sends this as an Origin
+    'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
-
     'exposed_headers' => [],
-
     'max_age' => 0,
-
     'supports_credentials' => false,
 
+    
 ];
