@@ -8,12 +8,17 @@ use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Style\Font;
 use PhpOffice\PhpWord\Style\Cell;
+use Illuminate\Support\Facades\Log;
 
 class TechnologicalCardGeneratorService{
 
 
     public function generateTechnologicalCard($products)
     {
+
+        Log::info('Generating technological card');
+        Log::info($products);
+        
         $totals = [
             'protein' => 0,
             'fat' => 0,
@@ -79,13 +84,13 @@ class TechnologicalCardGeneratorService{
             $proteinValue = $fatValue = $carbohydrateValue = 0;
 
             foreach ($productData['nutrients'] as $nutrient) {
-                if ($nutrient['nutrient_id'] == 70) { // Protein
+                if ($nutrient['nutrient_id'] == 2) { // Protein
                     $proteinValue = $nutrient['pivot']['weight'];
                     $totals['protein'] += $proteinValue;
-                } elseif ($nutrient['nutrient_id'] == 21) { // Fat
+                } elseif ($nutrient['nutrient_id'] == 3) { // Fat
                     $fatValue = $nutrient['pivot']['weight'];
                     $totals['fat'] += $fatValue;
-                } elseif ($nutrient['nutrient_id'] == 58) { // Carbohydrate
+                } elseif ($nutrient['nutrient_id'] == 4) { // Carbohydrate
                     $carbohydrateValue = $nutrient['pivot']['weight'];
                     $totals['carbohydrate'] += $carbohydrateValue;
                 }

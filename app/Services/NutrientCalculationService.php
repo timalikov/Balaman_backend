@@ -35,6 +35,7 @@ class NutrientCalculationService
     {
         foreach ($products as &$productData) {
             if (isset($productData['factor_ids'], $productData['weight'], $productData['product_id'])) {
+                // write condition 
                 $productId = $productData['product_id'];
                 $factorIds = $productData['factor_ids'];
                 $weight = $productData['weight'];
@@ -77,6 +78,9 @@ class NutrientCalculationService
                     // Update the weight in the $products array only for factor_id = 1
                     $productData['weight'] = round($productData['weight'] * $coefficient, 2);
                     $productData['brutto_weight'] = $weight;
+                } else {
+                    // If factor_ids does not contain the value 1, skip the coefficient calculation
+                    continue; // Skip this iteration, move to the next product
                 }
             }
         }

@@ -80,7 +80,7 @@ class TotalWeightService
 
     protected function aggregateNutrient(array $nutrientData, Collection $nutrientMap): void
     {
-        Log::info($nutrientData['measurement_unit'] . 'klaramen');
+        // Log::info($nutrientData['measurement_unit'] . 'klaramen');
         if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
             $name = $nutrientData['name'];
             $weight = $nutrientData['pivot']['weight'];
