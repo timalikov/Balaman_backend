@@ -3,7 +3,8 @@
 
 namespace App\Services;
 use App\Models\Product;
-
+use App\Models\Factor;
+use Illuminate\Support\Facades\Log;
 
 class WeightCalculationService
 {
@@ -13,7 +14,17 @@ class WeightCalculationService
     {
         foreach ($products as &$productData) {
             // Coefficient for weight (assuming base weight is 100g)
-            $weightCoefficient = $productData['weight'] / 100;
+
+            if (isset($productData['brutto_weight'])) {
+                $weightCoefficient = $productData['weight'] / $productData['brutto_weight'];
+            } else {
+                $weightCoefficient = $productData['weight'] / self::BASE_WEIGHT;
+            }
+
+            // $weightCoefficient = $productData['weight'] / 100;
+
+            // Log::info('weightCoefficient');
+            // Log::info($weightCoefficient);
     
             $productData['kilocalories'] *= $weightCoefficient;
             $productData['kilocalories_with_fiber'] *= $weightCoefficient;

@@ -67,8 +67,9 @@ class TotalWeightService
         if (isset($productData['weight'], $productData['price'], $productData['kilocalories'], $productData['kilocalories_with_fiber'])) {
             $totals['total_price'] += $productData['price'];
             $totals['total_weight'] += $productData['weight'];
-            $totals['total_kilocalories'] += $productData['kilocalories'];
-            $totals['total_kilocalories_with_fiber'] += $productData['kilocalories_with_fiber'];
+            $totals['total_kilocalories'] += round($productData['kilocalories'], 2);
+            $totals['total_kilocalories_with_fiber'] += round($productData['kilocalories_with_fiber'], 2);
+
         }
 
         if (isset($productData['nutrients'])) {
