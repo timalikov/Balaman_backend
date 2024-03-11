@@ -1,8 +1,6 @@
 version: "3.8"
 
 services:
-
-  # PHP Service
   php:
     build:
       context: .
@@ -21,9 +19,7 @@ services:
       - database
     networks:
       - balaman
-    
 
-  # Database server
   database:
     image: postgres:12.2-alpine
     restart: always
@@ -40,28 +36,28 @@ services:
       - balaman
 
   nginx:
-        image: nginx:alpine
-        volumes:
-            - ./:/var/www:delegated
-            - ./nginx/:/etc/nginx/conf.d:delegated
-            - ./nginx/vhosts:/etc/nginx/vhosts:delegated
-            - ./nginx/logs:/var/log/nginx:delegated
-            - ./certbot/www:/var/www/certbot/:ro
-            - ./certbot/conf/:/etc/nginx/ssl/:ro
-        depends_on:
-            - php
-        networks:
-            - balaman
-        ports:
-            - "8081:80"
-            - "8443:443"
+    image: nginx:alpine
+    volumes:
+      - ./:/var/www:delegated
+      - ./nginx/:/etc/nginx/conf.d:delegated
+      - ./nginx/vhosts:/etc/nginx/vhosts:delegated
+      - ./nginx/logs:/var/log/nginx:delegated
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    depends_on:
+      - php
+    networks:
+      - balaman
+    ports:
+      - "8081:80"
+      - "8443:443"
             
-    certbot:
-        image: certbot/certbot:latest
-        volumes:
-            - ./certbot/www/:/var/www/certbot/:rw
-        networks:
-            - balaman
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+    networks:
+      - balaman
 
 volumes:
   db-data:
