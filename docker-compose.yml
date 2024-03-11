@@ -43,7 +43,8 @@ services:
       - ./nginx/vhosts:/etc/nginx/vhosts:delegated
       - ./nginx/logs:/var/log/nginx:delegated
       - ./certbot/www:/var/www/certbot/:ro
-      - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+
     depends_on:
       - php
     networks:
@@ -56,6 +57,7 @@ services:
     image: certbot/certbot:latest
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt
     networks:
       - balaman
 
