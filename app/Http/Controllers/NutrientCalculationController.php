@@ -40,32 +40,32 @@ class NutrientCalculationController extends Controller
 
         $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-        // Log::info('customWeightAdjustedProducts');
-        // Log::info($customWeightAdjustedProducts);
+        Log::info('customWeightAdjustedProducts');
+        Log::info($customWeightAdjustedProducts);
         // Correct
 
         $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
 
-        // Log::info('weightLossAfterColdProcessing');
-        // Log::info($weightLossAfterColdProcessing);
-        //Correct
+        Log::info('weightLossAfterColdProcessing');
+        Log::info($weightLossAfterColdProcessing);
+        // Correct
         
         $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeight($weightLossAfterColdProcessing);
 
-        // Log::info('customWeightAdjustedAfterColdProcessing');
-        // Log::info($customWeightAdjustedAfterColdProcessing);
+        Log::info('customWeightAdjustedAfterColdProcessing');
+        Log::info($customWeightAdjustedAfterColdProcessing);
         // 
 
         $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
-        // Log::info('weightLossAfterThermalProcessing');
-        // Log::info($weightLossAfterThermalProcessing);
+        Log::info('weightLossAfterThermalProcessing');
+        Log::info($weightLossAfterThermalProcessing);
 
         // Calculate nutrients for the products
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
-        // Log::info('nutrientLossAfterThermalProcessing');
-        // Log::info($nutrientLossAfterThermalProcessing);
+        Log::info('nutrientLossAfterThermalProcessing');
+        Log::info($nutrientLossAfterThermalProcessing);
 
         $totals = $this->totalWeightService->calculateTotals($nutrientLossAfterThermalProcessing);
 

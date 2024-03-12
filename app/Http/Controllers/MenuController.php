@@ -171,7 +171,7 @@ class MenuController extends Controller
             'meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
             'meal_times.*.dishes' => 'required|array',
             'meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
-            'meal_times.*.dishes.*.weight' => 'required|numeric',
+            'meal_times.*.dishes.*.weight' => 'sometimes|numeric',
         ]);
         
         if ($validator->fails()) {
@@ -200,10 +200,20 @@ class MenuController extends Controller
                 ]);
     
                 foreach ($mealTimeData['dishes'] as $dishData) {
+
+                    // Check if weight is provided in the request for this dish
+                    if (isset($dishData['weight'])) {
+                        $weight = $dishData['weight'];
+                    } else {
+                        // Fetch dish weight from the database if not provided in the request
+                        $dish = Dish::find($dishData['dish_id']);
+                        $weight = $dish ? $dish->weight : null; 
+                    }
+
                     $menuMealTime->mealDishes()->updateOrCreate([
                         'dish_id' => $dishData['dish_id'],
                     ], [
-                        'weight' => $dishData['weight'],
+                        'weight' => $weight,
                     ]);
                 }
             }
