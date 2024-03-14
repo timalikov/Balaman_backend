@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+    nginx:
+        image: nginx:alpine
+        volumes:
+            - ../:/var/www:delegated
+            - ./nginx/:/etc/nginx/conf.d:delegated
+            - ./nginx/vhosts:/etc/nginx/vhosts:delegated
+            - ./nginx/logs:/var/log/nginx:delegated
+            - ./certbot/www:/var/www/certbot/:ro
+            - ./certbot/conf/:/etc/nginx/ssl/:ro
+        depends_on:
+            - php-fpm
+        networks:
+            - backend
+        ports:
+            - "80:80"
+            - "443:443"
+    certbot:
+        image: certbot/certbot:latest
+        volumes:
+            - ./certbot/www/:/var/www/certbot/:rw
+            - ./certbot/conf/:/etc/letsencrypt
+        networks:
+            - backend
+    php-fpm:
+        build:
+            context: php-fpm
+            dockerfile: Dockerfile
+        volumes:
+            - ../:/var/www:delegated
+            - ./php-fpm/php.ini:/usr/local/etc/php/conf.d/40-custom.ini:delegated
+            - ~/.ssh:/home/www-data/.ssh:delegated
+        networks:
+            - backend
+    postgres:
+        image: kartoza/postgis
+        environment:
+          POSTGRES_DATABASE: balaman_db
+          POSTGRES_USER: temir
+          POSTGRES_PASSWORD: password
+          POSTGRES_ROOT_PASSWORD: password
+        ports:
+            - "5432:5432"
+        networks:
+            - backend
+    redis:
+        image: redis:alpine
+        networks:
+            - backend
+networks:
+    backend:
+
