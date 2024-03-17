@@ -27,6 +27,8 @@ class WeightCalculationService
             // Log::info($weightCoefficient);
     
             $productData['kilocalories'] = round($productData['kilocalories'] * $weightCoefficient, 2);
+            // Log::info('productData[kilocalories]');
+            // Log::info($productData['kilocalories']);
             $productData['kilocalories_with_fiber'] = round($productData['kilocalories_with_fiber'] * $weightCoefficient, 2);
 
     

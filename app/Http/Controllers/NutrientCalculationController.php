@@ -38,6 +38,8 @@ class NutrientCalculationController extends Controller
             return response()->json(['error' => 'Invalid products data'], 400);
         }
 
+        // Log::info('Calculation Start');
+
         $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
         // Log::info('customWeightAdjustedProducts');
