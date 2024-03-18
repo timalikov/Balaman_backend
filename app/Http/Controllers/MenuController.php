@@ -9,6 +9,8 @@ use App\Models\MenuMealTime;
 use App\Models\MealDish;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Dish;
+
 
 
 
@@ -248,7 +250,7 @@ class MenuController extends Controller
 
         $menuId = $validatedData['menu_id'];
 
-         // Retrieve meal times and dishes for the specified menu, week, and day of the week
+        // Retrieve meal times and dishes for the specified menu, week, and day of the week
         $mealTimes = MenuMealTime::with(['mealDishes'])
                     ->where('menu_id', $menuId)
                     ->where('week', $validatedData['week'])
@@ -273,49 +275,59 @@ class MenuController extends Controller
 
     public function addDishToMenu(Request $request)
     {
-        // Adjusting validation rules for direct dish_id and weight input
         $validated = $request->validate([
             'menu_id' => 'required|integer|exists:menus,menu_id',
-            'meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
-            'week' => 'required|integer|min:1',
-            'day_of_week' => 'required|integer|between:1,7',
             'dish_id' => 'required|integer|exists:dishes,dish_id',
-            'weight' => 'required|numeric',
+            'weight' => 'sometimes|numeric',
         ]);
 
-        // Attempt to find the specific MenuMealTime entry
-        $menuMealTime = MenuMealTime::where([
-            'menu_id' => $validated['menu_id'],
-            'meal_time_id' => $validated['meal_time_id'],
-            'week' => $validated['week'],
-            'day_of_week' => $validated['day_of_week'],
-        ])->first();
+        $menu = Menu::findOrFail($validated['menu_id']);
+        $weight = $validated['weight'] ?? Dish::find($validated['dish_id'])->weight;
 
-        if (!$menuMealTime) {
-            // Return an error message if the specified meal time is not found
-            return response()->json(['message' => 'Specified meal time not found for the given day and week'], 404);
-        }
-
-        // Check if the dish is already associated with the meal time
-        $existingDish = $menuMealTime->mealDishes()->where('meal_dishes.dish_id', $validated['dish_id'])->first();
-
-
-        if ($existingDish) {
-            // Update the weight if the dish already exists
-            $menuMealTime->mealDishes()->updateExistingPivot($validated['dish_id'], ['weight' => $validated['weight']]);
+        if ($menu->menuMealTimes->isEmpty()) {
+            $menuMealTime = $this->createDefaultMenuMealTime($validated['menu_id']);
+            // Attach the dish to the newly created default menu meal time
+            $menuMealTime->mealDishes()->attach($validated['dish_id'], ['weight' => $weight]);
         } else {
-            // Attach the dish to the meal time if it's not already associated
-            $menuMealTime->mealDishes()->attach($validated['dish_id'], ['weight' => $validated['weight']]);
-        }
+            $additionalValidation = $request->validate([
+                'meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+                'week' => 'required|integer|min:1',
+                'day_of_week' => 'required|integer|between:1,7',
+            ]);
 
-        // Optionally, reload the meal time with dishes if you want to return the updated list
-        $menuMealTime->load('mealDishes');
+            $menuMealTime = MenuMealTime::firstOrCreate(
+                array_merge(['menu_id' => $validated['menu_id']], $additionalValidation),
+                ['menu_id' => $validated['menu_id']]
+            );
+
+            // Check if the dish already exists in the meal time
+            $existingDish = $menuMealTime->mealDishes()->where('dish_id', $validated['dish_id'])->first();
+
+            if ($existingDish) {
+                // Update the weight if the dish already exists
+                $menuMealTime->mealDishes()->updateExistingPivot($validated['dish_id'], ['weight' => $weight]);
+            } else {
+                // Attach the dish if it's not already associated
+                $menuMealTime->mealDishes()->attach($validated['dish_id'], ['weight' => $weight]);
+            }
+        }
 
         return response()->json([
             'message' => 'Dish added successfully to the specified day and meal time',
-            'mealTime' => $menuMealTime,
+            'mealTime' => $menuMealTime->load('mealDishes'),
         ]);
     }
+
+    protected function createDefaultMenuMealTime($menuId)
+    {
+        return MenuMealTime::create([
+            'menu_id' => $menuId,
+            'week' => 1,
+            'day_of_week' => 1,
+            'meal_time_id' => 1,
+        ]);
+    }
+
 
     public function removeDishFromMenu(Request $request)
     {
