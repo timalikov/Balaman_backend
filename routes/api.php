@@ -13,6 +13,7 @@ use App\Http\Controllers\DishCategoryController;
 use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\DishNutrientCalculationController;
 
 
 
@@ -109,3 +110,7 @@ Route::post('/menus/meal-plans', [MenuController::class, 'createMealPlan']);
 Route::post('/menus/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
 
 Route::post('/menus/add-dish', [MenuController::class, 'addDishToMenu']);
+
+
+// Dish calculator
+Route::post('/dishes-calculate-total-nutrients', [DishNutrientCalculationController::class, 'getTotalNutritrientsOfDishes']);
