@@ -134,11 +134,30 @@ class AuthController extends Controller
         // Check the response status code
         $statusCode = $tokenResult->getStatusCode();
 
+        // Changes start here: Modify the success response to include user info
         if ($statusCode == 200) {
-            // If the request was successful, return the tokens
-            return response()->json($responseContent);
+            // Obtain user info. Note: Ensure the user is already authenticated at this point.
+            $user = User::where('email', $request->input('email'))->first();
+
+            // Prepare the custom response structure with tokens and user info
+            $customResponse = [
+                'tokens' => [
+                    'access_token' => $responseContent['access_token'], // Assuming these keys exist
+                    'refresh_token' => $responseContent['refresh_token'], // Assuming these keys exist
+                ],
+                'user' => [
+                    'id' => $user->id,
+                    'displayName' => $user->name, // Adjust this if your user model uses a different field for the name
+                    'email' => $user->email,
+                    'photoURL' => $user->photo_url, // Adjust this field based on your user model
+                    'role' => $user->roles, // Adjust this to match how roles are stored/retrieved in your app
+                ],
+            ];
+
+            // Return the custom response
+            return response()->json($customResponse);
         } else {
-            // Log the error and return an appropriate error response
+            // Error handling remains the same
             Log::error("OAuth token request failed: Status Code: $statusCode, Response: " . $tokenResult->getContent());
             return response()->json(['message' => 'Failed to obtain access token'], $statusCode);
         }
