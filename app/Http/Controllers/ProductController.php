@@ -144,17 +144,25 @@ class ProductController extends Controller
             'productCategory' => function ($query) {
                 // Select only the necessary fields from the productCategory table
                 // Adjust the field names if they are different in your database
-                $query->select('product_category_id', 'name');
+                $query->select('product_category_id', 'name'); // Ensure correct field names are used here
+            },
+    
+            // Include dishes where the product is used
+            'dishes' => function ($query) {
+                // Select the necessary fields from the dishes table
+                // You may adjust the field names based on your database structure
+                $query->select('dishes.dish_id', 'dishes.name');
             }
         ])
         // Filter the product by its unique ID
-        ->where('product_id', $id)
+        ->where('product_id', $id) // Make sure the column name matches your schema
         // Fetch the first product that matches the criteria or fail
         ->firstOrFail();
     
         // Return the product data as a JSON response
         return response()->json($product);
     }
+    
     
 
 
