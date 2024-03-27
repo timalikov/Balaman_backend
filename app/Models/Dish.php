@@ -36,6 +36,12 @@ class Dish extends Model
                     ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
     }
 
+    public function menuMealTimes()
+    {
+        return $this->belongsToMany(MenuMealTime::class, 'meal_dishes', 'dish_id', 'menu_meal_time_id')
+                    ->withPivot('weight');
+}
+
 
 
 }

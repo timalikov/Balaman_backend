@@ -218,16 +218,39 @@ class DishController extends Controller
             $validatedData['weight'] = $request->input('weight', 0);
             $validatedData['kilocalories'] = $request->input('kilocalories', 0);
             $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
-
+        
             // macros
-            $validatedData['protein'] = $totalProtein;
-            $validatedData['fat'] = $totalFat;
-            $validatedData['carbohydrate'] = $totalCarbohydrate;
-
-
+            $validatedData['protein'] = $request->input('protein', 0);
+            $validatedData['fat'] = $request->input('fat', 0);
+            $validatedData['carbohydrate'] = $request->input('carbohydrate', 0);
+        
+            // Create the dish with validated data
             $dish = Dish::create($validatedData);
-            
+
+            // $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
+        
+            // // Check if 'nutrients' is provided in the request
+            // if ($request->has('nutrients')) {
+            //     $nutrientsData = [];
+            //     foreach ($request->input('nutrients') as $nutrient) {
+            //         $nutrientId = $nutrient['nutrient_id'];
+            //         $weight = $nutrient['weight'];
+                    
+            //         // Assuming there's a need to validate or sanitize $nutrientId and $weight
+            //         // This is just an example. Ensure to validate these fields as per your application's needs.
+            //         if (is_numeric($nutrientId) && is_numeric($weight)) {
+            //             $nutrientsData[$nutrientId] = ['weight' => $weight];
+            //         }
+            //     }
+            //     // Attach nutrients to the dish
+            //     // Ensure that your Dish model has a properly defined relationship to nutrients
+            //     $dish->nutrients()->attach($nutrientsData);
+            // }
+        
+            // // Optionally, return a response or perform additional operations
+            // return response()->json($dish, 201);
         }
+        
 
         // Attach nutrients' totals to the dish
         $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
@@ -263,30 +286,40 @@ class DishController extends Controller
      */
     public function show(int $id)
     {
-        // Fetch the dish by its ID
         $dish = Dish::findOrFail($id);
-
+    
+        // Eager load nutrients and MenuMealTimes with restricted Menu fields
         $dish->load([
-            'nutrients' => function($query) {
+            'nutrients' => function ($query) {
                 $query->withPivot('weight');
-            }
+            },
+            'menuMealTimes.menu' => function ($query) {
+                // Only select menu_id and name from the Menu
+                $query->select('menu_id', 'name');
+            },
+            'menuMealTimes.mealTime'
         ]);
-
-        if ($dish->products->isNotEmpty()) {
-            $dish->products->each(function ($product) {
-                // Assuming the pivot data is loaded and includes 'nutrients'
-                // Check if the pivot data exists and unset 'nutrients'
-                if (isset($product->pivot->nutrients)) {
-                    unset($product->pivot->nutrients);
-                }
-            });
-        } 
-            
-        
-
-        // Return the dish data as a JSON response
+    
+        // Transform the data to include only the menu id and name
+        $menus = $dish->menuMealTimes->map(function ($menuMealTime) {
+            return [
+                'menu_id' => $menuMealTime->menu->menu_id,
+                'name' => $menuMealTime->menu->name,
+            ];
+        })->unique('menu_id')->values(); // Ensures each menu is listed only once and reindexes the array
+    
+        // Add menus information directly to the dish object
+        $dish->menus = $menus;
+    
+        // Remove menuMealTimes relationship to clean up the response
+        unset($dish->menuMealTimes);
+    
         return response()->json($dish);
     }
+    
+
+
+
 
 
     /**

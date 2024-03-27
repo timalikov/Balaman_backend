@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Http\Resources\DishResource;
 
 class ProductController extends Controller
 {
@@ -149,16 +150,19 @@ class ProductController extends Controller
     
             // Include dishes where the product is used
             'dishes' => function ($query) {
-                // Select the necessary fields from the dishes table
-                // You may adjust the field names based on your database structure
                 $query->select('dishes.dish_id', 'dishes.name');
             }
+
         ])
         // Filter the product by its unique ID
         ->where('product_id', $id) // Make sure the column name matches your schema
         // Fetch the first product that matches the criteria or fail
         ->firstOrFail();
     
+        $product->dishes->transform(function ($dish) {
+            return collect($dish->toArray())->except(['pivot']);
+        });
+
         // Return the product data as a JSON response
         return response()->json($product);
     }
