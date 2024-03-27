@@ -30,5 +30,10 @@ class Menu extends Model
         return $this->hasMany(MenuMealTime::class, 'menu_id', 'menu_id');
     }
 
+    public function statusTransitions()
+    {
+        return $this->hasMany(MenuStatusTransition::class, 'menu_id', 'menu_id');
+    }
+
 
 }

@@ -76,4 +76,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function menuStatusTransitions()
+    {
+        return $this->hasMany(MenuStatusTransition::class, 'user_id');
+    }
+
 }

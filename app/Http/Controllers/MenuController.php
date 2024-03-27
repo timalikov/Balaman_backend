@@ -375,9 +375,23 @@ class MenuController extends Controller
     public function updateMenuStatus(Request $request, $id) {
         $menu = Menu::findOrFail($id);
         $newStatus = $request->input('status');
-
+        $comment = $request->input('comment', ''); // Default to empty string if not provided
+    
         try {
+            $oldStatus = $menu->status; // Store old status for logging
+    
+            // Perform the status transition
             if ($this->menuStateService->transition($menu, $newStatus)) {
+                // Log the status transition
+                MenuStatusTransition::create([
+                    'menu_id' => $menu->id,
+                    // 'user_id' => Auth::id(), // Assuming you want to log the ID of the authenticated user
+                    'user_id' => 1, 
+                    'from_status' => $oldStatus,
+                    'to_status' => $newStatus,
+                    'comment' => $comment, // Save the provided comment
+                ]);
+    
                 return response()->json(['message' => 'Menu status updated successfully.']);
             }
         } catch (Exception $e) {
