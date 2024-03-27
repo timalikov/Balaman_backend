@@ -5,10 +5,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
-  postgres:
+
+  database:
     environment:
+      # Added replication and WAL level settings directly; ensure these don't conflict with your .env variables
       REPLICATION: 'true'
       WAL_LEVEL: 'logical'
+
   redis:
     ports:
-      - 6379:6379
+      - "6379:6379"
