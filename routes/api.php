@@ -114,3 +114,7 @@ Route::post('/menus/add-dish', [MenuController::class, 'addDishToMenu']);
 
 // Dish calculator
 Route::post('/dishes-calculate-total-nutrients', [DishNutrientCalculationController::class, 'getTotalNutritrientsOfDishes']);
+
+
+// Menu status update
+Route::post('/menus/{menu}/update-status', [MenuController::class, 'updateMenuStatus']);

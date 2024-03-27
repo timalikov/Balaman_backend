@@ -16,8 +16,17 @@ return new class extends Migration
             $table->string('name');
             $table->string('description')->nullable();
             $table->unsignedBiginteger('user_id');
-            $table->enum('status', ['active', 'inactive', 'pending', 'archived']); // Пример 
-            $table->enum('season', ['spring', 'summer', 'autumn', 'winter']); // Пример
+            $table->enum('status', [
+                'draft',          // The menu is being edited and is not yet finalized.
+                'inactive',       // The menu is not currently in use or active.
+                'pending_review', // The menu has been completed by the nutritionist and is awaiting review by the education ministry.
+                'under_review',   // The menu is currently being reviewed by the education ministry.
+                'needs_revision', // The education ministry has reviewed the menu and requested revisions or improvements.
+                'approved',       // The menu has been reviewed and approved by the education ministry.
+                'rejected',       // The menu has been reviewed and rejected by the education ministry.
+                'archived'        // The menu is no longer active and has been archived.
+            ]);
+                        $table->enum('season', ['spring', 'summer', 'autumn', 'winter']); // Пример
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 

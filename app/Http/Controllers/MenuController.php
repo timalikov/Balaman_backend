@@ -10,12 +10,19 @@ use App\Models\MealDish;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Dish;
+use App\Services\MenuStateService;
 
 
 
 
 class MenuController extends Controller
 {
+    private $menuStateService;
+
+    public function __construct(MenuStateService $menuStateService) {
+        $this->menuStateService = $menuStateService;
+    }
+
 
     // public function __construct()
     // {
@@ -89,7 +96,7 @@ class MenuController extends Controller
         ]);
 
          // Set status to 'pending' automatically when menu is created
-        $validatedData['status'] = 'pending';
+        $validatedData['status'] = 'draft';
 
         // Extract user ID from JWT token
         // $userId = Auth::id();
@@ -365,7 +372,18 @@ class MenuController extends Controller
     }
 
 
+    public function updateMenuStatus(Request $request, $id) {
+        $menu = Menu::findOrFail($id);
+        $newStatus = $request->input('status');
 
+        try {
+            if ($this->menuStateService->transition($menu, $newStatus)) {
+                return response()->json(['message' => 'Menu status updated successfully.']);
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
 
 
     
