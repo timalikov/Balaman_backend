@@ -47,11 +47,18 @@ class AuthController extends Controller
     
         $validatedData = $validator->validated();
     
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => bcrypt($validatedData['password']),
-        ]);
+        try {
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => bcrypt($validatedData['password']),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
 
         // Assign default role if not provided or use the provided role
         $roleName = $request->input('role_name', 'user');
@@ -94,7 +101,7 @@ class AuthController extends Controller
         }
 
         if (!$this->attemptLogin($request)) {
-            return Response::HTTP_UNAUTHORIZED;
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         $grantType = 'password';

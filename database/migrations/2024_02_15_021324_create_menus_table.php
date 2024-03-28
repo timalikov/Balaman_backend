@@ -26,7 +26,6 @@ return new class extends Migration
                 'rejected',       // The menu has been reviewed and rejected by the education ministry.
                 'archived'        // The menu is no longer active and has been archived.
             ]);
-                        $table->enum('season', ['spring', 'summer', 'autumn', 'winter']); // Пример
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 

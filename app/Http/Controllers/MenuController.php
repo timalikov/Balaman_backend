@@ -93,10 +93,9 @@ class MenuController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'season' => 'required|in:spring,summer,autumn,winter',
         ]);
 
-         // Set status to 'pending' automatically when menu is created
+         // Set status to 'draft' automatically when menu is created
         $validatedData['status'] = 'draft';
 
         // Extract user ID from JWT token

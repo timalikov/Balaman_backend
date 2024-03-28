@@ -8,6 +8,7 @@ use App\Services\NutrientCalculationService;
 use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
 use App\Services\TotalWeightService;
+use Illuminate\Validation\ValidationException;
 
 class DishNutrientCalculationController extends Controller
 {
@@ -30,14 +31,18 @@ class DishNutrientCalculationController extends Controller
 
     public function getTotalNutritrientsOfDishes(Request $request)
     {
-        $request->validate([
-            'dishes' => 'required|array',
-            'dishes.*' => 'exists:dishes,dish_id', // Ensure this matches your dish ID column name
-            'products' => 'nullable|array',
-            'products.*.product_id' => 'required_with:products|exists:products,product_id', // Assuming 'products' is your table
-            'products.*.weight' => 'required_with:products|numeric',
-            'products.*.factor_ids' => 'sometimes:products|array',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'dishes' => 'sometimes|array',
+                'dishes.*' => 'required_with:dishes|exists:dishes,dish_id',
+                'products' => 'nullable|array',
+                'products.*.product_id' => 'required_with:products|exists:products,product_id',
+                'products.*.weight' => 'required_with:products|numeric',
+                'products.*.factor_ids' => 'sometimes:products|array',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
 
         $dishes = Dish::findMany($request->input('dishes'));
         $totals = $this->calculateDishTotals($dishes);
