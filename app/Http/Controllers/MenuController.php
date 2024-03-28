@@ -90,29 +90,92 @@ class MenuController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'weeks' => 'sometimes|array',
+            'weeks.*.days' => 'required_with:weeks|array',
+            'weeks.*.days.*.meal_times' => 'required_with:weeks|array',
+            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required_with:weeks|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.dishes' => 'required_with:weeks|array',
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required_with:weeks|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
         ]);
 
-         // Set status to 'draft' automatically when menu is created
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $validatedData = $validator->validated();
+
+        // Set status to 'draft' automatically when menu is created
         $validatedData['status'] = 'draft';
 
         // Extract user ID from JWT token
-        // $userId = Auth::id();
-        $userId = 1;
+        $userId = 1; // Replace with `Auth::id()` in production
         $validatedData['user_id'] = $userId;
 
-        $menu = Menu::create($validatedData);
+        DB::beginTransaction();
+        try {
+            $menu = Menu::create([
+                'name' => $validatedData['name'],
+                'description' => $validatedData['description'],
+                'user_id' => $userId,
+                'status' => 'draft'
+            ]);
 
-        return redirect()->route('menus.index')->with('success', 'Menu created successfully.');
+            if (isset($validatedData['weeks'])) {
+                foreach ($validatedData['weeks'] as $weekIndex => $week) {
+                    foreach ($week['days'] as $dayIndex => $day) {
+                        foreach ($day['meal_times'] as $mealTime) {
+                            $menuMealTime = $menu->menuMealTimes()->create([
+                                'week' => $weekIndex + 1,
+                                'day_of_week' => $dayIndex + 1,
+                                'meal_time_id' => $mealTime['meal_time_id'],
+                            ]);
+
+                            foreach ($mealTime['dishes'] as $dishData) {
+                                // Correctly associate existing dishes
+                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $dishData['weight'] ?? null]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Menu and meal plan created successfully.', 'menu' => $menu], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create menu and meal plan', 'error' => $e->getMessage()], 500);
+        }
+
     }
+
 
     public function show($id)
     {
         $menu = Menu::with(['menuMealTimes.mealTime', 'menuMealTimes.mealDishes'])
                     ->findOrFail($id);
 
+        $weeks = $this->organizeMealPlan($menu);
+
+        $response = [
+            'menu_id' => $menu->id,
+            'name' => $menu->name,
+            'description' => $menu->description,
+            'user_id' => $menu->user_id,
+            'status' => $menu->status,
+            'weeks' => $weeks,
+            'created_at' => $menu->created_at->toDateTimeString(),
+            'updated_at' => $menu->updated_at->toDateTimeString(),
+        ];
+
+        return response()->json($response);
+    }
+
+    protected function organizeMealPlan($menu)
+    {
         $weeks = [];
 
         foreach ($menu->menuMealTimes as $menuMealTime) {
@@ -120,127 +183,82 @@ class MenuController extends Controller
             $dayOfWeek = $menuMealTime->day_of_week;
             $mealTimeId = $menuMealTime->meal_time_id;
 
-            if (!isset($weeks[$week])) {
-                $weeks[$week] = [];
+            $weeks[$week][$dayOfWeek][$mealTimeId]['mealTime'] = $menuMealTime->mealTime->toArray();
+            foreach ($menuMealTime->mealDishes as $dish) {
+                $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'][] = $dish->toArray();
             }
-
-            if (!isset($weeks[$week][$dayOfWeek])) {
-                $weeks[$week][$dayOfWeek] = [];
-            }
-
-            // Check if the mealTimeId already exists for that day
-            if (!isset($weeks[$week][$dayOfWeek][$mealTimeId])) {
-                // Initialize the mealTime with its dishes if it doesn't exist
-                $weeks[$week][$dayOfWeek][$mealTimeId] = [
-                    'mealTime' => $menuMealTime->mealTime->toArray(),
-                    'dishes' => []
-                ];
-            }
-
-            // Append dishes to the existing mealTime
-            $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'] = array_merge(
-                $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'],
-                $menuMealTime->mealDishes->toArray()
-            );
         }
 
-        // Sort weeks and days within weeks, and reset the mealTime keys to ensure a list format
+        return $this->sortWeeksAndDays($weeks);
+    }
+
+    protected function sortWeeksAndDays($weeks)
+    {
         ksort($weeks);
         foreach ($weeks as $week => &$days) {
             ksort($days);
             foreach ($days as $day => &$mealTimes) {
-                $mealTimes = array_values($mealTimes); // Reset keys to ensure list format for JSON
+                $mealTimes = array_values($mealTimes); // Ensure list format
             }
         }
 
-        $response = [
-            'menu_id' => $menu->menu_id,
-            'name' => $menu->name,
-            'description' => $menu->description,
-            'user_id' => $menu->user_id,
-            'status' => $menu->status,
-            'season' => $menu->season,
-            'created_at' => $menu->created_at,
-            'updated_at' => $menu->updated_at,
-            'weeks' => $weeks,
-        ];
-
-        return response()->json($response);
+        return $weeks;
     }
 
 
 
-
-    public function createMealPlan(Request $request) {
+    public function createOrUpdateMealPlan(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'menu_id' => 'required|integer|exists:menus,menu_id',
-            'week' => 'required|integer|min:1',
-            'day_of_week' => 'required|integer|between:1,7',
-            'meal_times' => 'required|array',
-            'meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
-            'meal_times.*.dishes' => 'required|array',
-            'meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
-            'meal_times.*.dishes.*.weight' => 'sometimes|numeric',
+            'weeks' => 'required|array',
+            'weeks.*.days' => 'required|array',
+            'weeks.*.days.*.meal_times' => 'required|array',
+            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.dishes' => 'required|array',
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-        
-        $validatedData = $validator->validated();
-                
-        $menuId = $validatedData['menu_id'];
-    
-        // $menu = Menu::where('menu_id', $menuId)->where('user_id', Auth::id())->first();
-        $menu = Menu::where('menu_id', $menuId)->first();
 
-        if (!$menu) {
-            return response()->json(['message' => 'Menu not found or access denied'], 404);
-        }
-    
+        $validatedData = $validator->validated();
+        $menuId = $validatedData['menu_id'];
+
         DB::beginTransaction();
         try {
-            foreach ($validatedData['meal_times'] as $mealTimeData) {
-                $menuMealTime = MenuMealTime::firstOrCreate([
-                    'menu_id' => $menuId,
-                    'week' => $validatedData['week'],
-                    'day_of_week' => $validatedData['day_of_week'],
-                    'meal_time_id' => $mealTimeData['meal_time_id'],
-                ]);
-    
-                foreach ($mealTimeData['dishes'] as $dishData) {
+            // First, delete existing meal times (and related dishes through cascading, if set up) for this menu
+            $existingMealTimes = MenuMealTime::where('menu_id', $menuId);
+            $existingMealTimes->delete(); // Make sure your database is set up to cascade delete or manually delete related dishes if necessary
 
-                    // Check if weight is provided in the request for this dish
-                    if (isset($dishData['weight'])) {
-                        $weight = $dishData['weight'];
-                    } else {
-                        // Fetch dish weight from the database if not provided in the request
-                        $dish = Dish::find($dishData['dish_id']);
-                        $weight = $dish ? $dish->weight : null; 
+            // Then, proceed with creating the new meal plan
+            foreach ($validatedData['weeks'] as $weekIndex => $week) {
+                foreach ($week['days'] as $dayIndex => $day) {
+                    foreach ($day['meal_times'] as $mealTime) {
+                        $menuMealTime = MenuMealTime::create([
+                            'menu_id' => $menuId,
+                            'week' => $weekIndex + 1,
+                            'day_of_week' => $dayIndex + 1,
+                            'meal_time_id' => $mealTime['meal_time_id'],
+                        ]);
+
+                        foreach ($mealTime['dishes'] as $dishData) {
+                            $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $dishData['weight'] ?? null]);
+                        }
                     }
-
-                    $menuMealTime->mealDishes()->updateOrCreate([
-                        'dish_id' => $dishData['dish_id'],
-                    ], [
-                        'weight' => $weight,
-                    ]);
                 }
             }
-    
+
             DB::commit();
+            return response()->json(['message' => 'Meal plan updated successfully.'], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Failed to create daily meal plan', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to update meal plan', 'error' => $e->getMessage()], 500);
         }
-    
-        // Reload the menu to include the newly added meal times and dishes
-        $menu->load(['menuMealTimes' => function ($query) use ($validatedData) {
-            $query->where('week', $validatedData['week'])
-                  ->where('day_of_week', $validatedData['day_of_week']);
-        }, 'menuMealTimes.mealTime', 'menuMealTimes.mealDishes']);
-    
-        return response()->json(['message' => 'Daily meal plan created successfully', 'menu' => $menu], 201);
     }
+
     
     
     

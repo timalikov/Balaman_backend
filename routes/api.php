@@ -105,7 +105,7 @@ Route::apiResource(
     MenuController::class
 );
 
-Route::post('/menus/meal-plans', [MenuController::class, 'createMealPlan']);
+Route::post('/menus/meal-plans', [MenuController::class, 'createOrUpdateMealPlan']);
 
 Route::post('/menus/get-meal-plan', [MenuController::class, 'getMealTimesByWeekAndDay']);
 
