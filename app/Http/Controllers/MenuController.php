@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Dish;
 use App\Services\MenuStateService;
+use App\Models\MenuStatusTransition;
 
 
 
@@ -384,7 +385,7 @@ class MenuController extends Controller
             if ($this->menuStateService->transition($menu, $newStatus)) {
                 // Log the status transition
                 MenuStatusTransition::create([
-                    'menu_id' => $menu->id,
+                    'menu_id' => $menu->getKey(),
                     // 'user_id' => Auth::id(), // Assuming you want to log the ID of the authenticated user
                     'user_id' => 1, 
                     'from_status' => $oldStatus,
