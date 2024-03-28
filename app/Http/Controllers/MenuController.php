@@ -207,20 +207,19 @@ class MenuController extends Controller
                     'day_of_week' => $validatedData['day_of_week'],
                     'meal_time_id' => $mealTimeData['meal_time_id'],
                 ]);
-            
+    
                 foreach ($mealTimeData['dishes'] as $dishData) {
-            
+
                     // Check if weight is provided in the request for this dish
                     if (isset($dishData['weight'])) {
                         $weight = $dishData['weight'];
                     } else {
                         // Fetch dish weight from the database if not provided in the request
                         $dish = Dish::find($dishData['dish_id']);
-                        $weight = $dish ? $dish->default_weight : null;  // Ensure your Dish model has a 'default_weight' or similar attribute
+                        $weight = $dish ? $dish->weight : null; 
                     }
-            
+
                     $menuMealTime->mealDishes()->updateOrCreate([
-                        // Specify 'meal_dishes.dish_id' if necessary to clarify the table name
                         'dish_id' => $dishData['dish_id'],
                     ], [
                         'weight' => $weight,
