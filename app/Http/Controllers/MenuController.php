@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Dish;
 use App\Services\MenuStateService;
 use App\Models\MenuStatusTransition;
+use Exception;
 
 
 
@@ -417,8 +418,94 @@ class MenuController extends Controller
         }
     }
 
+    public function calculateMenuNutrition(Request $request)
+    {
 
-    
+        $this->validateMenuNutritionRequest($request);
 
+        $menu = Menu::findOrFail($request->input('menu_id'));
+
+        // Initialize total nutrition values
+        $nutritionTotals = ['kcal' => 0, 'protein' => 0, 'carbs' => 0, 'fat' => 0];
+        $totalDays = 0;
+
+        foreach ($request->input('weeks') as $week) {
+            foreach ($week['days'] as $day) {
+                $totalDays++;
+                $dailyTotals = $this->calculateDailyNutrition($day['meal_times']);
+
+                // Aggregate daily totals into overall nutrition totals
+                foreach ($nutritionTotals as $key => &$value) {
+                    $value += $dailyTotals[$key];
+                }
+            }
+        }
+
+        // Calculate average values for 1 day
+        $averageDailyNutrition = $this->calculateAverageDailyNutrition($nutritionTotals, $totalDays);
+
+        // Return the calculated averages in the response
+        return response()->json([
+            'average_daily_nutrition' => $averageDailyNutrition,
+            'total_days' => $totalDays
+        ], 200);
+    }
+
+    protected function validateMenuNutritionRequest(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'menu_id' => 'required|integer|exists:menus,menu_id',
+            'weeks' => 'required|array',
+            'weeks.*.days' => 'required|array',
+            'weeks.*.days.*.meal_times' => 'required|array',
+            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.dishes' => 'required|array',
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            abort(response()->json($validator->errors(), 422));
+        }
+
+    }
+
+    protected function calculateDailyNutrition($mealTimes)
+    {
+        $totals = ['kcal' => 0, 'protein' => 0, 'carbs' => 0, 'fat' => 0];
+
+        foreach ($mealTimes as $mealTime) {
+            foreach ($mealTime['dishes'] as $dishData) {
+                $dish = Dish::findOrFail($dishData['dish_id']);
+                $weight = isset($dishData['weight']) ? $dishData['weight'] : $dish->weight;
+
+                //dishData['weight'] exists
+                if (isset($dishData['weight'])) {
+                    $totals['kcal'] += $dish->kcal * $weight / 100;
+                    $totals['protein'] += $dish->protein * $weight / 100;
+                    $totals['carbs'] += $dish->carbs * $weight / 100;
+                    $totals['fat'] += $dish->fat * $weight / 100;
+                } else {
+                    $totals['kcal'] += $dish->kcal;
+                    $totals['protein'] += $dish->protein;
+                    $totals['carbs'] += $dish->carbs;
+                    $totals['fat'] += $dish->fat;
+                }
+            }
+        }
+
+        return $totals;
+    }
+
+    protected function calculateAverageDailyNutrition($nutritionTotals, $totalDays)
+    {
+        $averageDailyNutrition = [];
+
+        foreach ($nutritionTotals as $key => $value) {
+            $averageDailyNutrition[$key] = $totalDays > 0 ? $value / $totalDays : 0;
+        }
+
+        return $averageDailyNutrition;
+    }
 }
 

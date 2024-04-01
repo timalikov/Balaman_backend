@@ -14,7 +14,7 @@ use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DishNutrientCalculationController;
-
+use App\Http\Controllers\NutritionCalculatorController;
 
 
 /*
@@ -118,3 +118,6 @@ Route::post('/dishes-calculate-total-nutrients', [DishNutrientCalculationControl
 
 // Menu status update
 Route::post('/menus/{menu}/update-status', [MenuController::class, 'updateMenuStatus']);
+
+// Calculate average daily nutrition
+Route::post('/calculate-average-daily-nutrition', [MenuController::class, 'calculateMenuNutrition']);
