@@ -16,7 +16,7 @@ class TotalWeightService
             'total_price' => 0,
             'total_weight' => 0,
             'total_kilocalories' => 0,
-            'total_kilocalories_with_fiber' => 0,
+            // 'total_kilocalories_with_fiber' => 0,
             // Initialize macronutrients with default values
             'total_protein' => 0,
             'total_fat' => 0,
@@ -68,7 +68,7 @@ class TotalWeightService
             $totals['total_price'] += $productData['price'];
             $totals['total_weight'] += $productData['weight'];
             $totals['total_kilocalories'] += round($productData['kilocalories'], 2);
-            $totals['total_kilocalories_with_fiber'] += round($productData['kilocalories_with_fiber'], 2);
+            // $totals['total_kilocalories_with_fiber'] += round($productData['kilocalories_with_fiber'], 2);
 
         }
 

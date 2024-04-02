@@ -102,7 +102,7 @@ class DishNutrientCalculationController extends Controller
             'total_price' => 0,
             'total_weight' => 0,
             'total_kilocalories' => 0,
-            'total_kilocalories_with_fiber' => 0,
+            // 'total_kilocalories_with_fiber' => 0,
             'total_protein' => 0,
             'total_fat' => 0,
             'total_carbohydrate' => 0,
@@ -112,7 +112,7 @@ class DishNutrientCalculationController extends Controller
             $totals['total_price'] += $dish->price; // Assuming these properties exist and are named this way
             $totals['total_weight'] += $dish->weight;
             $totals['total_kilocalories'] += $dish->kilocalories;
-            $totals['total_kilocalories_with_fiber'] += $dish->kilocalories_with_fiber;
+            // $totals['total_kilocalories_with_fiber'] += $dish->kilocalories_with_fiber;
             $totals['total_protein'] += $dish->protein;
             $totals['total_fat'] += $dish->fat;
             $totals['total_carbohydrate'] += $dish->carbohydrate;

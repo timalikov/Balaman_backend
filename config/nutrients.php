@@ -1,4 +1,3 @@
-// File: config/nutrients.php
 <?php
 
 return [
