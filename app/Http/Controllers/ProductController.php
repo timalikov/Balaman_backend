@@ -138,13 +138,7 @@ class ProductController extends Controller
             // Include the micronutrients ('nutrients') associated with the product
             'nutrients' => function ($query) {
                 // Ensure to fetch the weight from the pivot table for each nutrient
-                $nutrientNames = [
-                    'water', 'protein', 'fat', 'carbohydrate', 'vitaminA', 'vitaminD', 'vitaminE', 
-                    'vitaminK', 'vitaminB1', 'vitaminB2', 'vitaminB3', 'vitaminB5', 'vitaminB6', 
-                    'vitaminB7', 'vitaminB9', 'vitaminB12', 'vitaminC', 'potassium', 'calcium', 
-                    'magnesium', 'phosphorus', 'iron', 'zinc', 'copper', 'iodine', 'sodium'
-                ];
-                $query->whereIn('name', $nutrientNames)
+                $query->whereIn('name', config('nutrients.nutrient_names'))
                       ->withPivot('weight');
             }, 
     

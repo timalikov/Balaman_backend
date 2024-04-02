@@ -116,6 +116,11 @@ class NutrientCalculationController extends Controller
         // Prepare the response
         $processedProductDetails = $nutrientLossAfterThermalProcessing[0] ?? null;
 
+        // filter the processed product's nutrients: processedProductDetails[nutrients] to include only the nutrient names that are in the config
+        $processedProductDetails['nutrients'] = collect($processedProductDetails['nutrients'])->filter(function ($nutrient) {
+            return in_array($nutrient['name'], config('nutrients.nutrient_names'));
+        })->values()->all();
+
         // Return the processed product details directly.
         return response()->json($processedProductDetails);
     }

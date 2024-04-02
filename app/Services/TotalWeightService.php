@@ -45,9 +45,9 @@ class TotalWeightService
     {
         // Map the specific database names to the totals keys
         $macronutrientsMap = [
-            'Яичный белок (белок)' => 'total_protein',
-            'Жиры' => 'total_fat',
-            'Углеводы, абсорбируемые' => 'total_carbohydrate',
+            'protein' => 'total_protein',
+            'fat' => 'total_fat',
+            'carbohydrate' => 'total_carbohydrate',
         ];
 
         foreach ($macronutrientsMap as $dbName => $totalKey) {
@@ -87,16 +87,20 @@ class TotalWeightService
             $weight = $nutrientData['pivot']['weight'];
             $unit = $nutrientData['measurement_unit'];
 
-            if (!$nutrientMap->has($name)) {
-                $nutrientMap->put($name, new Nutrient([
-                    'name' => $name,
-                    'weight' => 0,
-                    'measurement_unit' => $unit,
-                ]));
-            }
+            $nutrientNames = config('nutrients.nutrient_names');
+            // Only aggregate if the nutrient's name is in the $nutrientNames array
+            if (in_array($name, $nutrientNames, true)) {
+                if (!$nutrientMap->has($name)) {
+                    $nutrientMap->put($name, new Nutrient([
+                        'name' => $name,
+                        'weight' => 0,
+                        'measurement_unit' => $unit,
+                    ]));
+                }
             
-            $nutrient = $nutrientMap->get($name);
-            $nutrient->weight += $weight;
+                $nutrient = $nutrientMap->get($name);
+                $nutrient->weight += $weight;
+            }
         }
     }
 }
