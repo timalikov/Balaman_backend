@@ -34,7 +34,7 @@ class ProductsTableSeeder extends Seeder
                 'bls_code' => $record['bls_code'], 
                 'name' => $record['name'], 
                 'product_category_id' => $record['product_category_id'] !== '' ? (int) $record['product_category_id'] : null,
-                'price' => $record['price'] !== '' ? (float) $record['price'] : null, 
+                'price' => $record['price'] !== '' ? (float) $record['price'] : 0, 
                 'kilocalories' => $record['kilocalories'] !== '' ? (float) $record['kilocalories'] : null,
                 'kilocalories_with_fiber' => $record['kilocalories_with_fiber'] !== '' ? (float) $record['kilocalories_with_fiber'] : null,
             ]);
