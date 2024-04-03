@@ -167,25 +167,24 @@ class DishNutrientCalculationController extends Controller
     protected function calculateNutrientMap($dishes)
     {
         $nutrientMap = [];
+        $nutrientNames = config('nutrients.nutrient_names');
 
         foreach ($dishes as $dish) {
             foreach ($dish->nutrients as $nutrient) {
                 $nutrientKey = $nutrient->name; // Unique identifier for the nutrient, e.g., the name
                 $weight = $nutrient->pivot->weight; // Assuming there's a 'pivot' table with 'weight'
 
-                //Check if this nutrient is in nutrient_names in config
-                if (in_array($nutrientKey, config('nutrients.nutrient_names'))) {
-                    // Check if this nutrient is already in our map
-                    if (!array_key_exists($nutrientKey, $nutrientMap)) {
+                if (in_array($nutrientKey, $nutrientNames)) {
+                    if (!isset($nutrientMap[$nutrientKey])) {
                         $nutrientMap[$nutrientKey] = [
-                            'name' => $nutrientKey, // Adding name for conversion to the desired structure
+                            'name' => $nutrientKey,
                             'weight' => 0,
-                            'measurement_unit' => $nutrient->measurement_unit,
+                            'measurement_unit' => 'g',
                         ];
                     }
-                    // Add this dish's nutrient weight to the total
                     $nutrientMap[$nutrientKey]['weight'] += $weight;
                 }
+
             }
         }
 

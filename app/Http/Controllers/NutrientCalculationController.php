@@ -121,6 +121,25 @@ class NutrientCalculationController extends Controller
             return in_array($nutrient['name'], config('nutrients.nutrient_names'));
         })->values()->all();
 
+        // check if it has all the nutrients from the config nutrient names
+        $nutrientNames = config('nutrients.nutrient_names');
+        foreach ($nutrientNames as $name) {
+            $found = false;
+            foreach ($processedProductDetails['nutrients'] as $nutrient) {
+                if ($nutrient['name'] === $name) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $processedProductDetails['nutrients'][] = [
+                    'name' => $name,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ];
+            }
+        }
+
         // Return the processed product details directly.
         return response()->json($processedProductDetails);
     }

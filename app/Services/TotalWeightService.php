@@ -76,18 +76,29 @@ class TotalWeightService
             foreach ($productData['nutrients'] as $nutrientData) {
                 $this->aggregateNutrient($nutrientData, $nutrientMap);
             }
+        } else {
+            $nutrientNames = config('nutrients.nutrient_names');
+            foreach ($nutrientNames as $name) {
+                $nutrientMap->put($name, new Nutrient([
+                    'name' => $name,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ]));
+            }
+            
         }
     }
 
     protected function aggregateNutrient(array $nutrientData, Collection $nutrientMap): void
     {
+        $nutrientNames = config('nutrients.nutrient_names');
+
         // Log::info($nutrientData['measurement_unit'] . 'klaramen');
         if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
             $name = $nutrientData['name'];
             $weight = $nutrientData['pivot']['weight'];
             $unit = $nutrientData['measurement_unit'];
 
-            $nutrientNames = config('nutrients.nutrient_names');
             // Only aggregate if the nutrient's name is in the $nutrientNames array
             if (in_array($name, $nutrientNames, true)) {
                 if (!$nutrientMap->has($name)) {
@@ -100,6 +111,17 @@ class TotalWeightService
             
                 $nutrient = $nutrientMap->get($name);
                 $nutrient->weight += $weight;
+            }
+        }
+
+        // check if thr nutrientmap has all the nutrient names from nutrientNames
+        foreach ($nutrientNames as $name) {
+            if (!$nutrientMap->has($name)) {
+                $nutrientMap->put($name, new Nutrient([
+                    'name' => $name,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ]));
             }
         }
     }
