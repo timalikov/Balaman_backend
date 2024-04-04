@@ -96,6 +96,8 @@ class NutrientCalculationController extends Controller
         
         // Get products from request
         $products = $this->productFetchService->completeProductRequest($requestData['products']);
+        // \Log::info('Products fetched NutrientCalculator', ['products' => $products]);
+
 
         // Validate that products is not null and is an array
         if (is_null($products) || !is_array($products)) {

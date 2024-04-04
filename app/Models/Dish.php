@@ -40,8 +40,11 @@ class Dish extends Model
     {
         return $this->belongsToMany(MenuMealTime::class, 'meal_dishes', 'dish_id', 'menu_meal_time_id')
                     ->withPivot('weight');
-}
+    }
 
 
-
+    public function dishesProducts()
+    {
+        return $this->hasMany(DishProduct::class, 'dish_id', 'dish_id');
+    }
 }

@@ -14,13 +14,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dishes_products', function (Blueprint $table) {
+            $table->id('dish_product_id');
+
             $table->unsignedBigInteger('dish_id');
             $table->unsignedBigInteger('product_id');
+
+            $table->string('name');
 
             $table->float('weight', 8, 2)->default(100);
             $table->float('price');
             $table->float('kilocalories');
-            $table->float('kilocalories_with_fiber')->nullable();
+
+            $table->json('factor_ids'); 
 
             $table->json('nutrients');
 
@@ -29,7 +34,6 @@ return new class extends Migration
             $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
 
 
-            $table->primary(['dish_id', 'product_id']);
 
 
             $table->timestamps();

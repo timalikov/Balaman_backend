@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\NutrientCalculationService;
 use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
+use App\Services\DishCreationService;
 
 use App\Models\Dish;
 use App\Models\DishCategory;
@@ -19,11 +20,15 @@ class DishController extends Controller
     protected $weightCalculationService;
     protected $productFetchService;
 
-    public function __construct(NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService)
+    protected $dishCreationService;
+
+    public function __construct(NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService, DishCreationService $dishCreationService)
     {
         $this->nutrientCalculationService = $nutrientCalculationService;
         $this->weightCalculationService = $weightCalculationService;
         $this->productFetchService = $productFetchService;
+
+        $this->dishCreationService = $dishCreationService;
     }
     /**
      * Display a listing of the resource.
@@ -106,7 +111,7 @@ class DishController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'bls_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -127,157 +132,154 @@ class DishController extends Controller
             'products.*.weight' => 'required_with:products|numeric',
         ]);
 
-        $totalPrice = 0; // Initialize total price
-        $totalWeight = 0;
-        $totalKilocalories = 0;
-        $totalKilocaloriesWithFiber = 0;
-        $nutrientsTotals = []; // Initialize nutrients totals
-
-        // macros
-        $totalProtein = 0;
-        $totalFat = 0;
-        $totalCarbohydrate = 0;
-
-
-        if ($request->has('products')) {
-
-            $validatedData['has_relation_with_products'] = true;
-
-            $requestData = $request->input('products'); 
-            $products = $this->productFetchService->completeProductRequest($requestData);
-
-            if (is_null($products) || !is_array($products)) {
-                return response()->json(['error' => 'Invalid products data'], 400);
-            }
-
-            // Process products data
-            $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
-            $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
-            $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights); 
-
-            $productsData = [];
-            foreach ($productsWithUpdatedNutrients as $product) {
-                $totalPrice += $product['price'];
-                $totalWeight += $product['weight'];
-                $totalKilocalories += $product['kilocalories'];
-                $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
-            
-                foreach ($product['nutrients'] as $nutrient) {
-                    // Exclude specific macronutrients by their IDs
-                    if (!in_array($nutrient['nutrient_id'], [2, 3, 4])) {
-                        // Aggregate totals for other nutrients
-                        if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
-                            $nutrientsTotals[$nutrient['nutrient_id']] = 0;
-                        }
-                        $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["pivot"]['weight'];
-                    } else {
-                        // Sum up macronutrients separately
-                        switch ($nutrient['nutrient_id']) {
-                            case 2: // Assuming ID 2 is for protein
-                                $totalProtein += $nutrient["pivot"]['weight'];
-                                break;
-                            case 3: // Assuming ID 3 is for fat
-                                $totalFat += $nutrient["pivot"]['weight'];
-                                break;
-                            case 4: // Assuming ID 4 is for carbohydrate
-                                $totalCarbohydrate += $nutrient["pivot"]['weight'];
-                                break;
-                        }
-                    }
-                }
-                
-            
-                $productsData[$product['product_id']] = [
-                    'weight' => $product['weight'],
-                    'kilocalories' => $product['kilocalories'],
-                    'price' => $product['price'],
-                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'],
-                    'nutrients' => json_encode($product['nutrients'])
-                ];
-            }
-            
-
-        
-            $validatedData['price'] = $totalPrice;
-            $validatedData['weight'] = $totalWeight;
-            $validatedData['kilocalories'] = $totalKilocalories;
-            $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
-
-            // macros
-            $validatedData['protein'] = $totalProtein;
-            $validatedData['fat'] = $totalFat;
-            $validatedData['carbohydrate'] = $totalCarbohydrate;
-
-
-
-            $dish = Dish::create($validatedData);
-            
-            $dish->products()->attach($productsData);
-        } else {
-            $validatedData['price'] = $request->input('price');
-            $validatedData['weight'] = $request->input('weight', 0);
-            $validatedData['kilocalories'] = $request->input('kilocalories', 0);
-            $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
-        
-            // macros
-            $validatedData['protein'] = $request->input('protein', 0);
-            $validatedData['fat'] = $request->input('fat', 0);
-            $validatedData['carbohydrate'] = $request->input('carbohydrate', 0);
-        
-            // Create the dish with validated data
-            $dish = Dish::create($validatedData);
-
-            // $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
-        
-            // // Check if 'nutrients' is provided in the request
-            // if ($request->has('nutrients')) {
-            //     $nutrientsData = [];
-            //     foreach ($request->input('nutrients') as $nutrient) {
-            //         $nutrientId = $nutrient['nutrient_id'];
-            //         $weight = $nutrient['weight'];
-                    
-            //         // Assuming there's a need to validate or sanitize $nutrientId and $weight
-            //         // This is just an example. Ensure to validate these fields as per your application's needs.
-            //         if (is_numeric($nutrientId) && is_numeric($weight)) {
-            //             $nutrientsData[$nutrientId] = ['weight' => $weight];
-            //         }
-            //     }
-            //     // Attach nutrients to the dish
-            //     // Ensure that your Dish model has a properly defined relationship to nutrients
-            //     $dish->nutrients()->attach($nutrientsData);
-            // }
-        
-            // // Optionally, return a response or perform additional operations
-            // return response()->json($dish, 201);
+        if ($validator->fails()) {
+            // Here you can handle the failed validation as you like
+            // For example, return a custom response or throw a custom exception
+            return response()->json([
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
         }
-        
-
-        // Attach nutrients' totals to the dish
-        $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
-
-        if (!$request->has('nutrients')) {
-            $nutrientsData = [];
-            foreach ($nutrientsTotals as $nutrientId => $total) {
-                // Skip excluded nutrients
-                if (!in_array($nutrientId, $excludedNutrientIds)) {
-                    $nutrientsData[$nutrientId] = ['weight' => $total];
-                }
-            }
-            $dish->nutrients()->attach($nutrientsData);
-        } elseif ($request->has('nutrients')) {
-            $nutrientsData = [];
-            foreach ($request->input('nutrients') as $nutrient) {
-                // Skip excluded nutrients
-                if (!in_array($nutrient['nutrient_id'], $excludedNutrientIds)) {
-                    $nutrientsData[$nutrient['nutrient_id']] = ['weight' => $nutrient['weight']];
-                }
-            }
-            $dish->nutrients()->attach($nutrientsData);
-        }
+    
+        // If validation passes, continue with your logic
+        $validatedData = $validator->validated();
 
 
+        $requestDataProducts = $request->input('products');
+
+        $dish = $this->dishCreationService->createDish($validatedData, $requestDataProducts);
 
         return response()->json($dish, 201);
+
+
+        // $totalPrice = 0; // Initialize total price
+        // $totalWeight = 0;
+        // $totalKilocalories = 0;
+        // $totalKilocaloriesWithFiber = 0;
+        // $nutrientsTotals = []; // Initialize nutrients totals
+
+        // // macros
+        // $totalProtein = 0;
+        // $totalFat = 0;
+        // $totalCarbohydrate = 0;
+
+
+        // if ($request->has('products')) {
+
+        //     $validatedData['has_relation_with_products'] = true;
+
+        //     $requestData = $request->input('products'); 
+        //     $products = $this->productFetchService->completeProductRequest($requestData);
+
+        //     if (is_null($products) || !is_array($products)) {
+        //         return response()->json(['error' => 'Invalid products data'], 400);
+        //     }
+
+        //     // Process products data
+        //     $processedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+        //     $productsWithUpdatedWeights = $this->nutrientCalculationService->calculateWeight($processedProducts);
+        //     $productsWithUpdatedNutrients = $this->nutrientCalculationService->calculateNutrients($productsWithUpdatedWeights); 
+
+        //     $productsData = [];
+        //     foreach ($productsWithUpdatedNutrients as $product) {
+        //         $totalPrice += $product['price'];
+        //         $totalWeight += $product['weight'];
+        //         $totalKilocalories += $product['kilocalories'];
+        //         $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
+            
+        //         foreach ($product['nutrients'] as $nutrient) {
+        //             // Exclude specific macronutrients by their IDs
+        //             if (!in_array($nutrient['nutrient_id'], [2, 3, 4])) {
+        //                 // Aggregate totals for other nutrients
+        //                 if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
+        //                     $nutrientsTotals[$nutrient['nutrient_id']] = 0;
+        //                 }
+        //                 $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["pivot"]['weight'];
+        //             } else {
+        //                 // Sum up macronutrients separately
+        //                 switch ($nutrient['nutrient_id']) {
+        //                     case 2: // Assuming ID 2 is for protein
+        //                         $totalProtein += $nutrient["pivot"]['weight'];
+        //                         break;
+        //                     case 3: // Assuming ID 3 is for fat
+        //                         $totalFat += $nutrient["pivot"]['weight'];
+        //                         break;
+        //                     case 4: // Assuming ID 4 is for carbohydrate
+        //                         $totalCarbohydrate += $nutrient["pivot"]['weight'];
+        //                         break;
+        //                 }
+        //             }
+        //         }
+                
+            
+        //         $productsData[$product['product_id']] = [
+        //             'weight' => $product['weight'],
+        //             'kilocalories' => $product['kilocalories'],
+        //             'price' => $product['price'],
+        //             'kilocalories_with_fiber' => $product['kilocalories_with_fiber'],
+        //             'nutrients' => json_encode($product['nutrients'])
+        //         ];
+        //     }
+            
+
+        
+        //     $validatedData['price'] = $totalPrice;
+        //     $validatedData['weight'] = $totalWeight;
+        //     $validatedData['kilocalories'] = $totalKilocalories;
+        //     $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
+
+        //     // macros
+        //     $validatedData['protein'] = $totalProtein;
+        //     $validatedData['fat'] = $totalFat;
+        //     $validatedData['carbohydrate'] = $totalCarbohydrate;
+
+
+
+        //     $dish = Dish::create($validatedData);
+            
+        //     $dish->products()->attach($productsData);
+        // } else {
+        //     $validatedData['price'] = $request->input('price');
+        //     $validatedData['weight'] = $request->input('weight', 0);
+        //     $validatedData['kilocalories'] = $request->input('kilocalories', 0);
+        //     $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
+        
+        //     // macros
+        //     $validatedData['protein'] = $request->input('protein', 0);
+        //     $validatedData['fat'] = $request->input('fat', 0);
+        //     $validatedData['carbohydrate'] = $request->input('carbohydrate', 0);
+        
+        //     // Create the dish with validated data
+        //     $dish = Dish::create($validatedData);
+        // }
+        
+
+        // // Attach nutrients' totals to the dish
+        // $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
+
+        // if (!$request->has('nutrients')) {
+        //     $nutrientsData = [];
+        //     foreach ($nutrientsTotals as $nutrientId => $total) {
+        //         // Skip excluded nutrients
+        //         if (!in_array($nutrientId, $excludedNutrientIds)) {
+        //             $nutrientsData[$nutrientId] = ['weight' => $total];
+        //         }
+        //     }
+        //     $dish->nutrients()->attach($nutrientsData);
+        // } elseif ($request->has('nutrients')) {
+        //     $nutrientsData = [];
+        //     foreach ($request->input('nutrients') as $nutrient) {
+        //         // Skip excluded nutrients
+        //         if (!in_array($nutrient['nutrient_id'], $excludedNutrientIds)) {
+        //             $nutrientsData[$nutrient['nutrient_id']] = ['weight' => $nutrient['weight']];
+        //         }
+        //     }
+        //     $dish->nutrients()->attach($nutrientsData);
+        // }
+
+
+
+        // return response()->json($dish, 201);
 
     }
 
@@ -292,13 +294,17 @@ class DishController extends Controller
         $dish->load([
             'nutrients' => function ($query) {
                 $query->whereIn('name', config('nutrients.nutrient_names'))
-                      ->withPivot('weight');
+                ->withPivot('weight');
             },
             'menuMealTimes.menu' => function ($query) {
                 // Only select menu_id and name from the Menu
                 $query->select('menu_id', 'name');
             },
-            'menuMealTimes.mealTime'
+            'menuMealTimes.mealTime',
+
+            // 'dishesProducts' => function ($query) {
+            //     $query->select('product_id', 'name', 'weight', 'factor_ids');
+            // },
         ]);
     
         // Transform the data to include only the menu id and name
