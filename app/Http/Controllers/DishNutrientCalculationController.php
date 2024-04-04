@@ -87,9 +87,17 @@ class DishNutrientCalculationController extends Controller
             }
         }
 
-       
-
-
+        if (empty($nutrientMap)) {
+            $nutrientNames = config('nutrients.nutrient_names');
+            foreach ($nutrientNames as $nutrientName) {
+                $nutrientMap[] = [
+                    'name' => $nutrientName,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ];
+            }
+        }
+        
         return response()->json([
             'totals' => $totals,
             'nutrientMap' => $nutrientMap,
