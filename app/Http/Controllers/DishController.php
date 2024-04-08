@@ -113,7 +113,7 @@ class DishController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validatedData = $request->validate([
             'bls_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -121,7 +121,7 @@ class DishController extends Controller
             'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
             'dish_category_code' => 'nullable|string|max:255',
             // 'kilocalories' => 'required|numeric',
-
+            // 'kilocalories_with_fiber' => 'nullable|numeric',
             // 'price' => 'required|numeric',
             'image_url' => 'nullable|url',
             'health_factor' => 'required|numeric',
@@ -134,23 +134,10 @@ class DishController extends Controller
             'products.*.weight' => 'required_with:products|numeric',
         ]);
 
-        if ($validator->fails()) {
-            // Here you can handle the failed validation as you like
-            // For example, return a custom response or throw a custom exception
-            return response()->json([
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-    
-        // If validation passes, continue with your logic
-        $validatedData = $validator->validated();
-
-
         $totalPrice = 0; // Initialize total price
         $totalWeight = 0;
         $totalKilocalories = 0;
-
+        $totalKilocaloriesWithFiber = 0;
         $nutrientsTotals = []; // Initialize nutrients totals
 
         // macros
@@ -180,7 +167,8 @@ class DishController extends Controller
                 $totalPrice += $product['price'];
                 $totalWeight += $product['weight'];
                 $totalKilocalories += $product['kilocalories'];
-
+                // \Log::info('Product name', ['product' => $product['name']]);
+                // $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
             
                 foreach ($product['nutrients'] as $nutrient) {
                     // Exclude specific macronutrients by their IDs
@@ -207,21 +195,25 @@ class DishController extends Controller
                 }
                 
             
-                $productsData[$product['product_id']] = [
-                    'weight' => $product['weight'],
+                $bruttoWeight = $product['brutto_weight'] ?? $product['weight']; // Fallback to 'weight' if 'brutto_weight' is not set
+ 
+                $productsData[] = [
+                    'product_id' => $product['product_id'],
+                    'weight' => $bruttoWeight,
+                    'name' => $product['name'],
                     'kilocalories' => $product['kilocalories'],
                     'price' => $product['price'],
 
+                    'factor_ids' => json_encode($product['factor_ids']),
                     'nutrients' => json_encode($product['nutrients'])
                 ];
             }
             
 
-        
             $validatedData['price'] = $totalPrice;
             $validatedData['weight'] = $totalWeight;
             $validatedData['kilocalories'] = $totalKilocalories;
-
+            // $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
 
             // macros
             $validatedData['protein'] = $totalProtein;
@@ -237,7 +229,7 @@ class DishController extends Controller
             $validatedData['price'] = $request->input('price');
             $validatedData['weight'] = $request->input('weight', 0);
             $validatedData['kilocalories'] = $request->input('kilocalories', 0);
-
+            // $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
         
             // macros
             $validatedData['protein'] = $request->input('protein', 0);
@@ -246,38 +238,31 @@ class DishController extends Controller
         
             // Create the dish with validated data
             $dish = Dish::create($validatedData);
-        }
+
+            // $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
         
-
-        // Attach nutrients' totals to the dish
-        $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
-
-        if (!$request->has('nutrients')) {
-            $nutrientsData = [];
-            foreach ($nutrientsTotals as $nutrientId => $total) {
-                // Skip excluded nutrients
-                if (!in_array($nutrientId, $excludedNutrientIds)) {
-                    $nutrientsData[$nutrientId] = ['weight' => $total];
-                }
-            }
-            $dish->nutrients()->attach($nutrientsData);
-        } elseif ($request->has('nutrients')) {
-            $nutrientsData = [];
-            foreach ($request->input('nutrients') as $nutrient) {
-                // Skip excluded nutrients
-                if (!in_array($nutrient['nutrient_id'], $excludedNutrientIds)) {
-                    $nutrientsData[$nutrient['nutrient_id']] = ['weight' => $nutrient['weight']];
-                }
-            }
-            $dish->nutrients()->attach($nutrientsData);
+            // // Check if 'nutrients' is provided in the request
+            // if ($request->has('nutrients')) {
+            //     $nutrientsData = [];
+            //     foreach ($request->input('nutrients') as $nutrient) {
+            //         $nutrientId = $nutrient['nutrient_id'];
+            //         $weight = $nutrient['weight'];
+                    
+            //         // Assuming there's a need to validate or sanitize $nutrientId and $weight
+            //         // This is just an example. Ensure to validate these fields as per your application's needs.
+            //         if (is_numeric($nutrientId) && is_numeric($weight)) {
+            //             $nutrientsData[$nutrientId] = ['weight' => $weight];
+            //         }
+            //     }
+            //     // Attach nutrients to the dish
+            //     // Ensure that your Dish model has a properly defined relationship to nutrients
+            //     $dish->nutrients()->attach($nutrientsData);
+            // }
+        
+            // // Optionally, return a response or perform additional operations
         }
-
-
-
         return response()->json($dish, 201);
-
     }
-
     /**
      * Display the specified resource.
      */

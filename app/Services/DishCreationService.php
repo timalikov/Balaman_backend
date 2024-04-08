@@ -124,6 +124,14 @@ class DishCreationService
             
             // Edited: Ensure dish is created before attaching products.
             foreach ($productsData as $productId => $details) {
+                 // Log each product detail to check if the 'name' field is set
+                \Log::info('Attaching product to dish', ['productId' => $productId, 'details' => $details]);
+                
+                // Check if 'name' is set and is not null
+                if (!isset($details['name']) || is_null($details['name'])) {
+                    \Log::error('Product name is missing or null', ['productId' => $productId]);
+                }
+                
                 $dish->products()->attach($productId, $details);
             }
         } else {
