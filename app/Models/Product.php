@@ -21,8 +21,7 @@ class Product extends Model
         'product_category_code',
         'price',
         
-        'kilocaries',
-        'kilocaries_with_fiber',
+        'kilocalories',
         'image_url',
     ];
 
@@ -45,7 +44,7 @@ class Product extends Model
     public function dishes()
     {
         return $this->belongsToMany(Dish::class, 'dishes_products', 'product_id', 'dish_id')
-                    ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
+                    ->withPivot(['weight', 'price', 'kilocalories', 'nutrients']);
 
     }
 

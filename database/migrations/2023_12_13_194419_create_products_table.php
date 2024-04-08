@@ -26,7 +26,7 @@ return new class extends Migration
             $table->float('price');
            
             $table->float('kilocalories');
-            $table->float('kilocalories_with_fiber')->nullable();
+
 
             $table->string('image_url')->nullable();
 

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->float('price')->default(0);
             $table->float('weight', 8, 2);
             $table->float('kilocalories');
-            $table->float('kilocalories_with_fiber')->nullable();
+
 
             $table->string('image_url')->nullable();
             $table->boolean('has_relation_with_products')->default(false);

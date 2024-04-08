@@ -29,7 +29,7 @@ class WeightCalculationService
             $productData['kilocalories'] = round($productData['kilocalories'] * $weightCoefficient, 2);
             // Log::info('productData[kilocalories]');
             // Log::info($productData['kilocalories']);
-            $productData['kilocalories_with_fiber'] = round($productData['kilocalories_with_fiber'] * $weightCoefficient, 2);
+
 
     
             // Apply the coefficient to the weight of each nutrient in the micros array

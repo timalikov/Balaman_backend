@@ -14,7 +14,7 @@ class Dish extends Model
     protected $fillable = [
         'bls_code', 'name', 'description', 'recipe_description', 
         'dish_category_id', 'dish_category_code',
-        'price', 'weight', 'kilocalories', 'kilocalories_with_fiber',
+        'price', 'weight', 'kilocalories',
         'image_url', 
         'has_relation_with_products', 'health_factor', 'protein', 'fat', 'carbohydrate'
     ];
@@ -33,7 +33,7 @@ class Dish extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'dishes_products', 'dish_id', 'product_id')
-                    ->withPivot(['weight', 'price', 'kilocalories', 'kilocalories_with_fiber', 'nutrients']);
+                    ->withPivot(['weight', 'price', 'kilocalories', 'nutrients']);
     }
 
     public function menuMealTimes()

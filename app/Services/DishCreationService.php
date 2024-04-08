@@ -31,7 +31,7 @@ class DishCreationService
         $totalPrice = 0;
         $totalWeight = 0;
         $totalKilocalories = 0;
-        $totalKilocaloriesWithFiber = 0;
+
         $nutrientsTotals = [];
 
         $totalProtein = 0;
@@ -74,7 +74,7 @@ class DishCreationService
                 $totalPrice += $product['price'];
                 $totalWeight += $product['weight'];
                 $totalKilocalories += $product['kilocalories'];
-                $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
+
                 
                 foreach ($product['nutrients'] as $nutrient) {
                     if (!in_array($nutrient['nutrient_id'], [2, 3, 4])) {
@@ -114,7 +114,7 @@ class DishCreationService
             $validatedData['price'] = $totalPrice;
             $validatedData['weight'] = $totalWeight;
             $validatedData['kilocalories'] = $totalKilocalories;
-            $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
+
 
             $validatedData['protein'] = $totalProtein;
             $validatedData['fat'] = $totalFat;
@@ -185,7 +185,7 @@ class DishCreationService
 //     $validatedData['price'] = $request->input('price');
 //     $validatedData['weight'] = $request->input('weight', 0);
 //     $validatedData['kilocalories'] = $request->input('kilocalories', 0);
-//     $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
+
 
 //     // macros
 //     $validatedData['protein'] = $request->input('protein', 0);

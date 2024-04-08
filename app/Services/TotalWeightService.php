@@ -16,7 +16,7 @@ class TotalWeightService
             'total_price' => 0,
             'total_weight' => 0,
             'total_kilocalories' => 0,
-            // 'total_kilocalories_with_fiber' => 0,
+
             // Initialize macronutrients with default values
             'total_protein' => 0,
             'total_fat' => 0,
@@ -36,6 +36,20 @@ class TotalWeightService
         // Extract macronutrients' values and add them to totals
         $this->addMacronutrientsToTotals($nutrientMap, $totals);
 
+        // check if nutrientMap has all the nutrient names from nutrientNames except macronutrients
+        $nutrientNames = config('nutrients.nutrient_names');
+        foreach ($nutrientNames as $name) {
+            if (!$nutrientMap->has($name)) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
+                $nutrientMap->put($name, new Nutrient([
+                    'name' => $name,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ]));
+            }
+        }
         $totals['nutrient_map'] = $nutrientMap->values(); // Convert to array values if needed
 
         return $totals;
@@ -64,20 +78,20 @@ class TotalWeightService
 
     protected function processProductData(array $productData, array &$totals, Collection $nutrientMap): void
     {
-        if (isset($productData['weight'], $productData['price'], $productData['kilocalories'], $productData['kilocalories_with_fiber'])) {
+        if (isset($productData['weight'], $productData['price'], $productData['kilocalories'])) {
             $totals['total_price'] += $productData['price'];
             $totals['total_weight'] += $productData['weight'];
             $totals['total_kilocalories'] += round($productData['kilocalories'], 2);
-            // $totals['total_kilocalories_with_fiber'] += round($productData['kilocalories_with_fiber'], 2);
+
 
         }
 
+        $nutrientNames = config('nutrients.nutrient_names');
         if (isset($productData['nutrients'])) {
             foreach ($productData['nutrients'] as $nutrientData) {
                 $this->aggregateNutrient($nutrientData, $nutrientMap);
             }
         } else {
-            $nutrientNames = config('nutrients.nutrient_names');
             foreach ($nutrientNames as $name) {
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
@@ -85,7 +99,16 @@ class TotalWeightService
                     'measurement_unit' => 'g',
                 ]));
             }
-            
+        }
+
+        if ($productData['nutrients'] == []) {
+            foreach ($nutrientNames as $name) {
+                $nutrientMap->put($name, new Nutrient([
+                    'name' => $name,
+                    'weight' => 0,
+                    'measurement_unit' => 'g',
+                ]));
+            }
         }
     }
 

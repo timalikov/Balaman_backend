@@ -17,6 +17,8 @@ class NutrientLossesByProductsTableSeeder extends Seeder
      */
     public function run()
     {
+        Log::info('Starting NutrientLossesByProductsTableSeeder');
+
         // Disable foreign key checks to avoid constraint violations
         Schema::disableForeignKeyConstraints();
         // Truncate the table
@@ -24,29 +26,41 @@ class NutrientLossesByProductsTableSeeder extends Seeder
         // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
-        $csvDirectory = storage_path('app/database_data/nutrient_losses/csv_data');
+        $csvDirectory = storage_path('app/database_data/factors/nutrient_losses/csv_data');
         $csvFiles = glob($csvDirectory . '/*.csv');
+        
+        if (empty($csvFiles)) {
+            Log::warning('No CSV files found in directory: ' . $csvDirectory);
+            return;
+        }
 
         $insertedRecords = [];
         $rejectedRecords = [];
 
         foreach ($csvFiles as $csvFile) {
+            Log::info('Processing file: ' . $csvFile);
+
             $csv = Reader::createFromPath($csvFile, 'r');
             $csv->setHeaderOffset(0);
 
             foreach ($csv->getRecords() as $record) {
                 if ($this->isValidNumber($record['coefficient'])) {
-                    DB::table('nutrient_losses_by_products')->insert([
-                        'product_id' => (int) $record['product_id'],
-                        'factor_id'           => (int) $record['factor_id'],
-                        'nutrient_id'         => (int) $record['nutrient_id'],
-                        'coefficient'         => (float) $record['coefficient'],
-                        'created_at'          => now(),
-                    ]);
+                    try {
+                        DB::table('nutrient_losses_by_products')->insert([
+                            'product_id' => (int) $record['product_id'],
+                            'factor_id'   => (int) $record['factor_id'],
+                            'nutrient_id' => (int) $record['nutrient_id'],
+                            'coefficient' => (float) $record['coefficient'],
+                            'created_at'  => now(),
+                        ]);
 
-                    $insertedRecords[] = $record;
+                        $insertedRecords[] = $record;
+                    } catch (\Exception $e) {
+                        Log::error('Error inserting record: ' . $e->getMessage());
+                    }
                 } else {
                     $rejectedRecords[] = $record;
+                    Log::info('Record rejected due to invalid coefficient value', $record);
                 }
             }
         }
@@ -69,6 +83,10 @@ class NutrientLossesByProductsTableSeeder extends Seeder
 
     protected function isValidNumber($value)
     {
-        return is_numeric($value) && $value !== '-';
+        $isValid = is_numeric($value) && $value !== '-';
+        if (!$isValid) {
+            Log::info("Value `{$value}` is not a valid number.");
+        }
+        return $isValid;    
     }
 }

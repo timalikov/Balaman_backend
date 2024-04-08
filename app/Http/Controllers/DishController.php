@@ -14,6 +14,8 @@ use App\Services\DishCreationService;
 use App\Models\Dish;
 use App\Models\DishCategory;
 
+use Illuminate\Support\Facades\Validator;
+
 class DishController extends Controller
 {
     protected $nutrientCalculationService;
@@ -119,7 +121,7 @@ class DishController extends Controller
             'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
             'dish_category_code' => 'nullable|string|max:255',
             // 'kilocalories' => 'required|numeric',
-            // 'kilocalories_with_fiber' => 'nullable|numeric',
+
             // 'price' => 'required|numeric',
             'image_url' => 'nullable|url',
             'health_factor' => 'required|numeric',
@@ -148,7 +150,7 @@ class DishController extends Controller
         $totalPrice = 0; // Initialize total price
         $totalWeight = 0;
         $totalKilocalories = 0;
-        $totalKilocaloriesWithFiber = 0;
+
         $nutrientsTotals = []; // Initialize nutrients totals
 
         // macros
@@ -178,7 +180,7 @@ class DishController extends Controller
                 $totalPrice += $product['price'];
                 $totalWeight += $product['weight'];
                 $totalKilocalories += $product['kilocalories'];
-                $totalKilocaloriesWithFiber += $product['kilocalories_with_fiber'];
+
             
                 foreach ($product['nutrients'] as $nutrient) {
                     // Exclude specific macronutrients by their IDs
@@ -209,7 +211,7 @@ class DishController extends Controller
                     'weight' => $product['weight'],
                     'kilocalories' => $product['kilocalories'],
                     'price' => $product['price'],
-                    'kilocalories_with_fiber' => $product['kilocalories_with_fiber'],
+
                     'nutrients' => json_encode($product['nutrients'])
                 ];
             }
@@ -219,7 +221,7 @@ class DishController extends Controller
             $validatedData['price'] = $totalPrice;
             $validatedData['weight'] = $totalWeight;
             $validatedData['kilocalories'] = $totalKilocalories;
-            $validatedData['kilocalories_with_fiber'] = $totalKilocaloriesWithFiber;
+
 
             // macros
             $validatedData['protein'] = $totalProtein;
@@ -235,7 +237,7 @@ class DishController extends Controller
             $validatedData['price'] = $request->input('price');
             $validatedData['weight'] = $request->input('weight', 0);
             $validatedData['kilocalories'] = $request->input('kilocalories', 0);
-            $validatedData['kilocalories_with_fiber'] = $request->input('kilocalories_with_fiber');
+
         
             // macros
             $validatedData['protein'] = $request->input('protein', 0);
