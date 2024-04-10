@@ -113,10 +113,10 @@ class DishController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'bls_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'recipe_description' => 'nullable|string',
             'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
             'dish_category_code' => 'nullable|string|max:255',
@@ -124,15 +124,22 @@ class DishController extends Controller
             // 'kilocalories_with_fiber' => 'nullable|numeric',
             // 'price' => 'required|numeric',
             'image_url' => 'nullable|url',
-            'health_factor' => 'required|numeric',
+            'health_factor' => 'nullable|numeric',
 
-            'nutrients' => 'nullable|array',
+            'nutrients' => 'sometimes|array',
 
             // Validate the optional products array
             'products' => 'sometimes|array',
             'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
             'products.*.weight' => 'required_with:products|numeric',
+            'products.*.factor_ids' => 'sometimes:products|array',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        $validatedData = $validator->validated();
 
         $totalPrice = 0; // Initialize total price
         $totalWeight = 0;
@@ -239,25 +246,25 @@ class DishController extends Controller
             // Create the dish with validated data
             $dish = Dish::create($validatedData);
 
-            // $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
+            $excludedNutrientIds = [2, 3, 4]; // IDs for protein, fat, carbohydrate
         
-            // // Check if 'nutrients' is provided in the request
-            // if ($request->has('nutrients')) {
-            //     $nutrientsData = [];
-            //     foreach ($request->input('nutrients') as $nutrient) {
-            //         $nutrientId = $nutrient['nutrient_id'];
-            //         $weight = $nutrient['weight'];
+            // Check if 'nutrients' is provided in the request
+            if ($request->has('nutrients')) {
+                $nutrientsData = [];
+                foreach ($request->input('nutrients') as $nutrient) {
+                    $nutrientId = $nutrient['nutrient_id'];
+                    $weight = $nutrient['weight'];
                     
-            //         // Assuming there's a need to validate or sanitize $nutrientId and $weight
-            //         // This is just an example. Ensure to validate these fields as per your application's needs.
-            //         if (is_numeric($nutrientId) && is_numeric($weight)) {
-            //             $nutrientsData[$nutrientId] = ['weight' => $weight];
-            //         }
-            //     }
-            //     // Attach nutrients to the dish
-            //     // Ensure that your Dish model has a properly defined relationship to nutrients
-            //     $dish->nutrients()->attach($nutrientsData);
-            // }
+                    // Assuming there's a need to validate or sanitize $nutrientId and $weight
+                    // This is just an example. Ensure to validate these fields as per your application's needs.
+                    if (is_numeric($nutrientId) && is_numeric($weight)) {
+                        $nutrientsData[$nutrientId] = ['weight' => $weight];
+                    }
+                }
+                // Attach nutrients to the dish
+                // Ensure that your Dish model has a properly defined relationship to nutrients
+                $dish->nutrients()->attach($nutrientsData);
+            }
         
             // // Optionally, return a response or perform additional operations
         }
