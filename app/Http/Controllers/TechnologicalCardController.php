@@ -50,6 +50,8 @@ class TechnologicalCardController extends Controller
         // Calculate nutrients for the products
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
-        return $this->technologicalCardGeneratorService->generateTechnologicalCard($nutrientLossAfterThermalProcessing);
+        $name = $request->input('name');
+        $description = $request->input('recipe_description');
+        return $this->technologicalCardGeneratorService->generateTechnologicalCard($name, $description, $nutrientLossAfterThermalProcessing);
     }
 }
