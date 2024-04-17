@@ -107,7 +107,7 @@ class DishNutrientCalculationController extends Controller
                 ];
             }
         }
-        
+
         return response()->json([
             'totals' => $totals,
             'nutrientMap' => $nutrientMap,
@@ -153,7 +153,7 @@ class DishNutrientCalculationController extends Controller
         // Log::info($weightLossAfterColdProcessing);
         // Correct
         
-        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeight($weightLossAfterColdProcessing);
+        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
 
         // Log::info('customWeightAdjustedAfterColdProcessing');
         // Log::info($customWeightAdjustedAfterColdProcessing);
