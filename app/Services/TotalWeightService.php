@@ -38,6 +38,7 @@ class TotalWeightService
 
         // check if nutrientMap has all the nutrient names from nutrientNames except macronutrients
         $nutrientNames = config('nutrients.nutrient_names');
+        $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
         foreach ($nutrientNames as $name) {
             if (!$nutrientMap->has($name)) {
                 if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
@@ -46,7 +47,7 @@ class TotalWeightService
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
-                    'measurement_unit' => 'g',
+                    'measurement_unit' => $nutrientMeasurements[$name],
                 ]));
             }
         }
@@ -87,6 +88,7 @@ class TotalWeightService
         }
 
         $nutrientNames = config('nutrients.nutrient_names');
+        $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
         if (isset($productData['nutrients'])) {
             foreach ($productData['nutrients'] as $nutrientData) {
                 $this->aggregateNutrient($nutrientData, $nutrientMap);
@@ -96,7 +98,7 @@ class TotalWeightService
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
-                    'measurement_unit' => 'g',
+                    'measurement_unit' => $nutrientMeasurements[$name],
                 ]));
             }
         }
@@ -106,7 +108,7 @@ class TotalWeightService
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
-                    'measurement_unit' => 'g',
+                    'measurement_unit' => $nutrientMeasurements[$name],
                 ]));
             }
         }
@@ -115,6 +117,7 @@ class TotalWeightService
     protected function aggregateNutrient(array $nutrientData, Collection $nutrientMap): void
     {
         $nutrientNames = config('nutrients.nutrient_names');
+        $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
 
         // Log::info($nutrientData['measurement_unit'] . 'klaramen');
         if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
@@ -143,7 +146,7 @@ class TotalWeightService
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
-                    'measurement_unit' => 'g',
+                    'measurement_unit' => $nutrientMeasurements[$name],
                 ]));
             }
         }
