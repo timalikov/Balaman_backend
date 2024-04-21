@@ -94,19 +94,25 @@ class MenuController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'weeks' => 'sometimes|array',
-            'weeks.*.days' => 'required_with:weeks|array',
-            'weeks.*.days.*.meal_times' => 'required_with:weeks|array',
-            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required_with:weeks|integer|exists:meal_times,meal_time_id',
-            'weeks.*.days.*.meal_times.*.dishes' => 'required_with:weeks|array',
-            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required_with:weeks|integer|exists:dishes,dish_id',
-            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
+            'weeks' => 'required|array|min:1',  // Ensure at least one week is provided
+        
+            'weeks.*.week_number' => 'required|integer|between:1,52',  // Ensure every week has a week number
+            'weeks.*.days' => 'required|array|min:1',  // Ensure every week has at least one day
+        
+            'weeks.*.days.*.day_number' => 'required|integer|between:1,7',  // Critical: Ensure every day has a day number
+            'weeks.*.days.*.meal_times' => 'required|array|min:1',  // Ensure every day has at least one meal time
+        
+            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',  // Validate meal time ID existence
+            'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1',  // Ensure every meal time has at least one dish
+        
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',  // Validate dish ID existence
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',  // Optional: weight of the dish
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json($validator->errors(), 422);  
         }
-
+        
         $validatedData = $validator->validated();
 
         // Set status to 'draft' automatically when menu is created
@@ -122,7 +128,7 @@ class MenuController extends Controller
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
                 'user_id' => $userId,
-                'status' => 'draft'
+                'status' => $validatedData['status'],
             ]);
 
             if (isset($validatedData['weeks'])) {
@@ -130,14 +136,16 @@ class MenuController extends Controller
                     foreach ($week['days'] as $dayIndex => $day) {
                         foreach ($day['meal_times'] as $mealTime) {
                             $menuMealTime = $menu->menuMealTimes()->create([
-                                'week' => $weekIndex + 1,
-                                'day_of_week' => $dayIndex + 1,
+                                'week' => $week['week_number'],
+                                'day_of_week' => $day['day_number'],
                                 'meal_time_id' => $mealTime['meal_time_id'],
                             ]);
 
                             foreach ($mealTime['dishes'] as $dishData) {
+                                // if isset weight -> weight = weight else weight = dish->weight 
+                                $weight = isset($dishData['weight']) ? $dishData['weight'] : Dish::find($dishData['dish_id'])->weight;
                                 // Correctly associate existing dishes
-                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $dishData['weight'] ?? null]);
+                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $weight]);
                             }
                         }
                     }
@@ -153,6 +161,73 @@ class MenuController extends Controller
 
     }
 
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'weeks' => 'required|array|min:1',
+
+            'weeks.*.week_number' => 'required|integer|between:1,52',
+            'weeks.*.days' => 'required|array|min:1',
+
+            'weeks.*.days.*.day_number' => 'required|integer|between:1,7',
+            'weeks.*.days.*.meal_times' => 'required|array|min:1',
+
+            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1',
+
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $validatedData = $validator->validated();
+
+        $menu = Menu::findOrFail($id);  // Find the menu by ID or fail
+
+        DB::beginTransaction();
+        try {
+            // Update the existing menu's basic information
+            $menu->update([
+                'name' => $validatedData['name'],
+                'description' => $validatedData['description'],
+                // Note: Assuming user_id and status should not be changed on update
+            ]);
+
+            // Optionally clear existing relations if you want a full rewrite
+            $menu->menuMealTimes()->delete();  // Deletes all existing meal times and related dishes
+
+            // Repopulate the menu details
+            if (isset($validatedData['weeks'])) {
+                foreach ($validatedData['weeks'] as $week) {
+                    foreach ($week['days'] as $day) {
+                        foreach ($day['meal_times'] as $mealTime) {
+                            $menuMealTime = $menu->menuMealTimes()->create([
+                                'week' => $week['week_number'],
+                                'day_of_week' => $day['day_number'],
+                                'meal_time_id' => $mealTime['meal_time_id'],
+                            ]);
+
+                            foreach ($mealTime['dishes'] as $dishData) {
+                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $dishData['weight'] ?? null]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Menu and meal plan updated successfully.', 'menu' => $menu], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to update menu and meal plan', 'error' => $e->getMessage()], 500);
+        }
+    }
+
 
     public function show($id)
     {
@@ -162,7 +237,7 @@ class MenuController extends Controller
         $weeks = $this->organizeMealPlan($menu);
 
         $response = [
-            'menu_id' => $menu->id,
+            'menu_id' => $menu->menu_id,
             'name' => $menu->name,
             'description' => $menu->description,
             'user_id' => $menu->user_id,
@@ -180,18 +255,28 @@ class MenuController extends Controller
         $weeks = [];
 
         foreach ($menu->menuMealTimes as $menuMealTime) {
-            $week = $menuMealTime->week;
-            $dayOfWeek = $menuMealTime->day_of_week;
+            $weekNumber = $menuMealTime->week;
+            $dayNumber = $menuMealTime->day_of_week;
             $mealTimeId = $menuMealTime->meal_time_id;
 
-            $weeks[$week][$dayOfWeek][$mealTimeId]['mealTime'] = $menuMealTime->mealTime->toArray();
+            // Initialize week and day if not already set
+            if (!isset($weeks[$weekNumber])) {
+                $weeks[$weekNumber] = [];
+            }
+            if (!isset($weeks[$weekNumber][$dayNumber])) {
+                $weeks[$weekNumber][$dayNumber] = [];
+            }
+
+            // Collect meal time and dishes data
+            $weeks[$weekNumber][$dayNumber][$mealTimeId]['mealTime'] = $menuMealTime->mealTime->toArray();
             foreach ($menuMealTime->mealDishes as $dish) {
-                $weeks[$week][$dayOfWeek][$mealTimeId]['dishes'][] = $dish->toArray();
+                $weeks[$weekNumber][$dayNumber][$mealTimeId]['dishes'][] = $dish->toArray();
             }
         }
 
         return $this->sortWeeksAndDays($weeks);
     }
+
 
     protected function sortWeeksAndDays($weeks)
     {

@@ -10,7 +10,7 @@ use PhpOffice\PhpWord\Style\Font;
 use PhpOffice\PhpWord\Style\Cell;
 use Illuminate\Support\Facades\Log;
 
-class TechnologicalCardGeneratorService{
+class TechnologicalCardGenerationService{
 
 
     public function generateTechnologicalCard($name, $description, $products)

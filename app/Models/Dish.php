@@ -42,9 +42,4 @@ class Dish extends Model
                     ->withPivot('weight');
     }
 
-
-    public function dishesProducts()
-    {
-        return $this->hasMany(DishProduct::class, 'dish_id', 'dish_id');
-    }
 }

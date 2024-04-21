@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\NutrientCalculationService;
 use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
-use App\Services\TechnologicalCardGeneratorService;
+use App\Services\TechnologicalCardGenerationService;
 
 class TechnologicalCardController extends Controller
 {
@@ -14,19 +14,19 @@ class TechnologicalCardController extends Controller
     protected $nutrientCalculationService;
     protected $weightCalculationService;
     protected $productFetchService;
-    protected $technologicalCardGeneratorService;
+    protected $technologicalCardGenerationService;
 
     public function __construct(
         NutrientCalculationService $nutrientCalculationService,
         WeightCalculationService $weightCalculationService,
         ProductFetchService $productFetchService,
-        TechnologicalCardGeneratorService $technologicalCardGeneratorService,
+        TechnologicalCardGenerationService $technologicalCardGenerationService,
         )
     {
         $this->nutrientCalculationService = $nutrientCalculationService;
         $this->weightCalculationService = $weightCalculationService;
         $this->productFetchService = $productFetchService;
-        $this->technologicalCardGeneratorService = $technologicalCardGeneratorService;
+        $this->technologicalCardGenerationService = $technologicalCardGenerationService;
     }
 
     public function generate(Request $request)
@@ -52,6 +52,6 @@ class TechnologicalCardController extends Controller
 
         $name = $request->input('name');
         $description = $request->input('recipe_description');
-        return $this->technologicalCardGeneratorService->generateTechnologicalCard($name, $description, $nutrientLossAfterThermalProcessing);
+        return $this->technologicalCardGenerationService->generateTechnologicalCard($name, $description, $nutrientLossAfterThermalProcessing);
     }
 }
