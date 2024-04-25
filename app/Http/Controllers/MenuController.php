@@ -187,19 +187,16 @@ class MenuController extends Controller
 
         $validatedData = $validator->validated();
 
-        $menu = Menu::findOrFail($id);  // Find the menu by ID or fail
+        $menu = Menu::findOrFail($id);  
 
         DB::beginTransaction();
         try {
-            // Update the existing menu's basic information
             $menu->update([
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
-                // Note: Assuming user_id and status should not be changed on update
             ]);
 
-            // Optionally clear existing relations if you want a full rewrite
-            $menu->menuMealTimes()->delete();  // Deletes all existing meal times and related dishes
+            $menu->menuMealTimes()->delete();  
 
             // Repopulate the menu details
             if (isset($validatedData['weeks'])) {
@@ -213,7 +210,8 @@ class MenuController extends Controller
                             ]);
 
                             foreach ($mealTime['dishes'] as $dishData) {
-                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $dishData['weight'] ?? null]);
+                                $weight = isset($dishData['weight']) ? $dishData['weight'] : Dish::find($dishData['dish_id'])->weight;
+                                $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $weight]);
                             }
                         }
                     }
