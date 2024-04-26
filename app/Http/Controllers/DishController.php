@@ -289,9 +289,9 @@ class DishController extends Controller
             },
             'menuMealTimes.mealTime',
 
-            // 'dishesProducts' => function ($query) {
-            //     $query->select('product_id', 'name', 'weight', 'factor_ids');
-            // },
+            'dishesProducts' => function ($query) {
+                $query->select('product_id', 'name', 'weight', 'factor_ids');
+            },
         ]);
     
         // Transform the data to include only the menu id and name

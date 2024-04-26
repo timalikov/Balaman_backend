@@ -506,7 +506,7 @@ class MenuController extends Controller
 
         $this->validateMenuNutritionRequest($request);
 
-        $menu = Menu::findOrFail($request->input('menu_id'));
+        // $menu = Menu::findOrFail($request->input('menu_id'));
 
         // Initialize total nutrition values
         $nutritionTotals = ['kcal' => 0, 'protein' => 0, 'carbs' => 0, 'fat' => 0];
@@ -537,7 +537,7 @@ class MenuController extends Controller
     protected function validateMenuNutritionRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'menu_id' => 'required|integer|exists:menus,menu_id',
+            // 'menu_id' => 'required|integer|exists:menus,menu_id',
             'weeks' => 'required|array',
             'weeks.*.days' => 'required|array',
             'weeks.*.days.*.meal_times' => 'required|array',
