@@ -9,13 +9,14 @@ class MenuMealTime extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'menu_meal_time_id'; // Set primary key
-    protected $table = 'menu_meal_times'; // Explicitly define table name
+    protected $table = 'menu_meal_times'; 
 
-    // Assuming both menu_id and meal_time_id can be mass assigned along with day_of_week and week
+    protected $primaryKey = 'menu_meal_time_id'; 
+
     protected $fillable = [
         'menu_id',
-        'meal_time_id',
+        'meal_time_name',
+        'meal_time_number',
         'day_of_week',
         'week',
     ];
@@ -31,10 +32,10 @@ class MenuMealTime extends Model
     /**
      * MealTime relationship.
      */
-    public function mealTime()
-    {
-        return $this->belongsTo(MealTime::class, 'meal_time_id', 'meal_time_id');
-    }
+    // public function mealTime()
+    // {
+    //     return $this->belongsTo(MealTime::class, 'meal_time_id', 'meal_time_id');
+    // }
 
 
     public function mealDishes()

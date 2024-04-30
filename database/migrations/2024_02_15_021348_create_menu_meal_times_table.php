@@ -14,17 +14,18 @@ return new class extends Migration
         Schema::create('menu_meal_times', function (Blueprint $table) {
             $table->id('menu_meal_time_id');
             $table->unsignedBiginteger('menu_id');
-            $table->unsignedBiginteger('meal_time_id');
+            // $table->unsignedBiginteger('meal_time_id');
+            $table->string('meal_time_name');
+            $table->integer('meal_time_number');
             $table->integer('day_of_week');
             $table->integer('week');
 
             $table->foreign('menu_id')->references('menu_id')->on('menus')->onDelete('cascade');
-            $table->foreign('meal_time_id')->references('meal_time_id')->on('meal_times')->onDelete('cascade');
+            // $table->foreign('meal_time_id')->references('meal_time_id')->on('meal_times')->onDelete('cascade');
 
             $table->timestamps();
         });
 
-        // Добавление ограничения CHECK для PostgreSQL
         DB::statement('ALTER TABLE menu_meal_times ADD CONSTRAINT chk_day_of_week CHECK (day_of_week >= 1 AND day_of_week <= 6)');
     }
 

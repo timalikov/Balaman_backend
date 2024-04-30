@@ -41,7 +41,7 @@ class NutrientsTableSeeder extends Seeder
             ['name' => 'vitaminB9', 'measurement_unit' => 'µg'],
             ['name' => 'vitaminB12', 'measurement_unit' => 'µg'],
             ['name' => 'vitaminC', 'measurement_unit' => 'mg'],
-            ['name' => 'Пищевые волокна', 'measurement_unit' => 'g'],
+            ['name' => 'fiber', 'measurement_unit' => 'g'],
             ['name' => 'potassium', 'measurement_unit' => 'mg'],
             ['name' => 'calcium', 'measurement_unit' => 'mg'],
             ['name' => 'magnesium', 'measurement_unit' => 'mg'],

@@ -23,10 +23,12 @@ class MenuLayoutGenerationService{
 
 
         // Set the document to landscape orientation
-        $section = $phpWord->addSection(['orientation' => 'landscape']);
+        // $section = $phpWord->addSection(['orientation' => 'landscape']
+        $section = $phpWord->addSection();
 
         $menuId = $request->input('menu_id');  // Assume the menu ID is passed as part of the request
         $menu = Menu::findOrFail($menuId);  // Retrieve the menu or fail if not found
+        $totalPrice = 0;
 
         $selectedDayNumber = $request->input('day_number');  // Day number input
         $selectedWeekNumber = $request->input('week_number');  // Week number input
@@ -48,23 +50,21 @@ class MenuLayoutGenerationService{
             $table = $section->addTable($styleTable);
             $table->addRow();
             $table->addCell(2000)->addText($meal->mealTime->name, $headerFontStyle);
-            $table->addCell(1000)->addText('Чел.', $headerFontStyle);
+
             $table->addCell(1000)->addText('Выход', $headerFontStyle);
-            $table->addCell(2000)->addText('Наименование продуктов', $headerFontStyle);
+            $table->addCell(1000)->addText('Чел.: ' . $children_count);
+            $table->addCell(1000)->addText('Цена', $headerFontStyle);
        
             foreach ($meal->mealDishes as $dish) {
                 $table->addRow();
                 $table->addCell(2000)->addText($dish->name);
-                $table->addCell(1000)->addText($children_count);
                 $table->addCell(1000)->addText($dish->weight);
+                $table->addCell(1000)->addText($dish->weight * $children_count);
+                $table->addCell(1000)->addText($dish->price * $children_count);
+                $totalPrice += $dish->price * $children_count;
 
-                
-                // iterate through the products of the dish
-                $products = $dish->products;
-                foreach ($products as $product) {
-                    $table->addCell(2000)->addText($product->name . " - " . $product->pivot->weight);
-                }
             }            
+            $section->addText('Итого: ' . $totalPrice . ' тенге', $headerFontStyle, array('alignment' => 'right'));
             $section->addTextBreak(1);
         }
         

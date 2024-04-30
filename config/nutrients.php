@@ -2,7 +2,7 @@
 
 return [
     'nutrient_names' => [
-        'water', 'protein', 'fat', 'carbohydrate',
+        'water', 'protein', 'fat', 'carbohydrate', 'fiber',
         'vitaminA', 'vitaminD', 'vitaminE', 'vitaminK',
         'vitaminB1', 'vitaminB2', 'vitaminB3', 'vitaminB5',
         'vitaminB6', 'vitaminB7', 'vitaminB9', 'vitaminB12',
@@ -15,6 +15,7 @@ return [
         'protein' => 'g',
         'fat' => 'g',
         'carbohydrate' => 'g',
+        'fiber' => 'g',
         'vitaminA' => 'µg',
         'vitaminD' => 'µg',
         'vitaminE' => 'mg',
