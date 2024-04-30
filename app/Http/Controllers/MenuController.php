@@ -396,8 +396,8 @@ class MenuController extends Controller
                 'total_protein' => $averageDailyNutrition['protein'] ?? 0,
                 'total_fat' => $averageDailyNutrition['fat'] ?? 0,
                 'total_carbohydrate' => $averageDailyNutrition['carbohydrate'] ?? 0,
-                'nutrient_map' => $nutrientMap
-            ]
+            ],
+            'nutrientMap' =>  collect($nutrientMap)->values(),
         ], 200);
     }
 
