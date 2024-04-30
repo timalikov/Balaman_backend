@@ -18,26 +18,22 @@ class MenuLayoutGenerationService{
         $titleFontStyle = array('name' => 'Arial', 'size' => 14, 'bold' => true);
         $headerFontStyle = array('name' => 'Arial', 'size' => 12);
 
-        // table style
         $styleTable = array('borderSize' => 6, 'borderColor' => '006699', 'cellMargin' => 80);
 
-
-        // Set the document to landscape orientation
-        // $section = $phpWord->addSection(['orientation' => 'landscape']
         $section = $phpWord->addSection();
 
-        $menuId = $request->input('menu_id');  // Assume the menu ID is passed as part of the request
-        $menu = Menu::findOrFail($menuId);  // Retrieve the menu or fail if not found
+        $menuId = $request->input('menu_id');  
+        $menu = Menu::findOrFail($menuId);  
         $totalPrice = 0;
 
-        $selectedDayNumber = $request->input('day_number');  // Day number input
-        $selectedWeekNumber = $request->input('week_number');  // Week number input
+        $selectedDayNumber = $request->input('day_number'); 
+        $selectedWeekNumber = $request->input('week_number');
 
         // Fetch data for the selected day and week within the identified menu
         $meals = $menu->menuMealTimes()->where([
             ['day_of_week', '=', $selectedDayNumber],
             ['week', '=', $selectedWeekNumber],
-        ])->with(['mealTime', 'mealDishes'])->get();  
+        ])->with(['mealDishes'])->get();  
         
         $children_count = $request->input('children_count');
 
@@ -49,7 +45,7 @@ class MenuLayoutGenerationService{
         foreach ($meals as $meal) {
             $table = $section->addTable($styleTable);
             $table->addRow();
-            $table->addCell(2000)->addText($meal->mealTime->name, $headerFontStyle);
+            $table->addCell(2000)->addText($meal->meal_time_name, $headerFontStyle);
 
             $table->addCell(1000)->addText('Выход', $headerFontStyle);
             $table->addCell(1000)->addText('Чел.: ' . $children_count);
