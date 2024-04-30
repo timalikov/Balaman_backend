@@ -39,24 +39,20 @@ class MenuController extends Controller
      */
     public function index(Request $request)
     {
-        // Validate the request
         $request->validate([
             'search' => 'string|nullable',
-            'menu_id' => 'integer|nullable', // Assuming you want to search by menu_id
-            'user_id' => 'integer|nullable', // Assuming you want to filter by user_id
+            'menu_id' => 'integer|nullable', 
+            'user_id' => 'integer|nullable', 
             'per_page' => 'integer|nullable',
             'page' => 'integer|nullable'
         ]);
 
-        // Check for specific menu ID search
         if ($request->has('menu_id')) {
-            return $this->show($request->input('menu_id')); // Ensure you have a show method to handle this
+            return $this->show($request->input('menu_id')); 
         }
 
-        // Start the query
         $query = Menu::with('user');
 
-        // Handle the general search parameter
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
 
@@ -64,23 +60,19 @@ class MenuController extends Controller
                 $q->where('name', 'like', '%' . $searchTerm . '%')
                 ->orWhere('description', 'like', '%' . $searchTerm . '%')
                 ->orWhereHas('user', function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', '%' . $searchTerm . '%'); // Assuming 'name' is a searchable field in the User model
+                    $q->where('name', 'like', '%' . $searchTerm . '%'); 
                 });
             });
         }
 
-        // Filter by user_id if provided
         if ($request->has('user_id')) {
             $query->where('user_id', $request->input('user_id'));
         }
 
-        // Determine the number of menus per page
-        $perPage = $request->input('per_page', 10); // Default to 10 if not provided
+        $perPage = $request->input('per_page', 10); 
 
-        // Get the results with pagination
         $menus = $query->paginate($perPage);
 
-        // Optional: Customize the response format if needed
         return response()->json([
             'current_page' => $menus->currentPage(),
             'items_per_page' => $menus->perPage(),
@@ -203,7 +195,6 @@ class MenuController extends Controller
 
             $menu->menuMealTimes()->delete();  
 
-            // Repopulate the menu details
             if (isset($validatedData['weeks'])) {
                 foreach ($validatedData['weeks'] as $week) {
                     foreach ($week['days'] as $day) {
@@ -291,21 +282,17 @@ class MenuController extends Controller
         foreach ($weeks as $week => &$days) {
             ksort($days);
             foreach ($days as $day => &$mealTimes) {
-                ksort($mealTimes); // Sorting by meal_time_number to maintain order
-                $mealTimes = array_values($mealTimes); // Ensure list format
+                ksort($mealTimes); 
+                $mealTimes = array_values($mealTimes); 
             }
         }
     
         return $weeks;
     }
     
-    
-    
-    
 
     public function getMealTimesByWeekAndDay(Request $request)
     {
-        // Validate the incoming request parameters
         $validatedData = $request->validate([
             'menu_id' => 'required|integer|exists:menus,menu_id',
             'week' => 'required|integer',
@@ -314,7 +301,6 @@ class MenuController extends Controller
 
         $menuId = $validatedData['menu_id'];
 
-        // Retrieve meal times and dishes for the specified menu, week, and day of the week
         $mealTimes = MenuMealTime::with(['mealDishes'])
                     ->where('menu_id', $menuId)
                     ->where('week', $validatedData['week'])
@@ -326,7 +312,6 @@ class MenuController extends Controller
         }
 
 
-        // Calculate the total number of weeks and days available
         $totalWeeks = MenuMealTime::select('week')->distinct()->count();
         $daysInWeek = MenuMealTime::where('week', $validatedData['week'])->select('day_of_week')->distinct()->count();
 
@@ -337,109 +322,23 @@ class MenuController extends Controller
         ]);
     }
 
-    public function addDishToMenu(Request $request)
-    {
-        $validated = $request->validate([
-            'menu_id' => 'required|integer|exists:menus,menu_id',
-            'dish_id' => 'required|integer|exists:dishes,dish_id',
-            'weight' => 'sometimes|numeric',
-        ]);
-
-        $menu = Menu::findOrFail($validated['menu_id']);
-        $weight = $validated['weight'] ?? Dish::find($validated['dish_id'])->weight;
-
-        if ($menu->menuMealTimes->isEmpty()) {
-            $menuMealTime = $this->createDefaultMenuMealTime($validated['menu_id']);
-            // Attach the dish to the newly created default menu meal time
-            $menuMealTime->mealDishes()->attach($validated['dish_id'], ['weight' => $weight]);
-        } else {
-            $additionalValidation = $request->validate([
-                'meal_time_name' => 'required|string',
-                'meal_time_number' => 'required|integer',
-                'week' => 'required|integer|min:1',
-                'day_of_week' => 'required|integer|between:1,7',
-            ]);
-
-            $menuMealTime = MenuMealTime::firstOrCreate(
-                array_merge(['menu_id' => $validated['menu_id']], $additionalValidation),
-                ['menu_id' => $validated['menu_id']]
-            );
-
-            // Check if the dish already exists in the meal time
-            $existingDish = $menuMealTime->mealDishes()->where('dish_id', $validated['dish_id'])->first();
-
-            if ($existingDish) {
-                // Update the weight if the dish already exists
-                $menuMealTime->mealDishes()->updateExistingPivot($validated['dish_id'], ['weight' => $weight]);
-            } else {
-                // Attach the dish if it's not already associated
-                $menuMealTime->mealDishes()->attach($validated['dish_id'], ['weight' => $weight]);
-            }
-        }
-
-        return response()->json([
-            'message' => 'Dish added successfully to the specified day and meal time',
-            'mealTime' => $menuMealTime->load('mealDishes'),
-        ]);
-    }
-
-
-
-
-    public function removeDishFromMenu(Request $request)
-    {
-        // Validate the request
-        $validated = $request->validate([
-            'menu_id' => 'required|integer|exists:menus,menu_id',
-            'meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
-            'week' => 'required|integer|min:1',
-            'day_of_week' => 'required|integer|between:1,7',
-            'dish_id' => 'required|integer|exists:dishes,dish_id',
-        ]);
-
-        // Attempt to find the specific MenuMealTime entry
-        $menuMealTime = MenuMealTime::where([
-            'menu_id' => $validated['menu_id'],
-            'meal_time_id' => $validated['meal_time_id'],
-            'week' => $validated['week'],
-            'day_of_week' => $validated['day_of_week'],
-        ])->first();
-
-        if (!$menuMealTime) {
-            // If the meal time does not exist, return an error
-            return response()->json(['message' => 'Specified meal time not found for the given day and week'], 404);
-        }
-
-        // Attempt to detach the dish from the meal time
-        $detached = $menuMealTime->mealDishes()->detach($validated['dish_id']);
-
-        if ($detached) {
-            return response()->json(['message' => 'Dish removed successfully from the specified day and meal time']);
-        } else {
-            // If the dish was not found or could not be removed, return an error
-            return response()->json(['message' => 'Failed to remove the dish or dish was not found in the specified meal time'], 404);
-        }
-    }
-
 
     public function updateMenuStatus(Request $request, $id) {
         $menu = Menu::findOrFail($id);
         $newStatus = $request->input('status');
-        $comment = $request->input('comment', ''); // Default to empty string if not provided
+        $comment = $request->input('comment', ''); 
     
         try {
-            $oldStatus = $menu->status; // Store old status for logging
+            $oldStatus = $menu->status; 
     
-            // Perform the status transition
             if ($this->menuStateService->transition($menu, $newStatus)) {
-                // Log the status transition
                 MenuStatusTransition::create([
                     'menu_id' => $menu->getKey(),
-                    // 'user_id' => Auth::id(), // Assuming you want to log the ID of the authenticated user
+                    // 'user_id' => Auth::id(), // Enable this in production
                     'user_id' => 1, 
                     'from_status' => $oldStatus,
                     'to_status' => $newStatus,
-                    'comment' => $comment, // Save the provided comment
+                    'comment' => $comment,
                 ]);
     
                 return response()->json(['message' => 'Menu status updated successfully.']);
@@ -472,9 +371,33 @@ class MenuController extends Controller
 
         $averageDailyNutrition = $this->calculateAverageDailyNutrition($nutritionTotals, $totalDays);
 
+        $nutrientMap = [];
+        $nutrientNames = config('nutrients.nutrient_names'); 
+        $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
+
+        foreach ($nutrientNames as $name) {
+            if (!isset($nutrientMap[$name])) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
+                $nutrientMap[$name] = [
+                    'name' => $name,
+                    'weight' => isset($averageDailyNutrition[$name]) ? $averageDailyNutrition[$name] : 0,
+                    'measurement_unit' => $nutrientMeasurements[$name]
+                ];
+            }
+        }
+
         return response()->json([
-            'average_daily_nutrition' => $averageDailyNutrition,
-            'total_days' => $totalDays
+            'totals' => [
+                'total_price' => 0, 
+                'total_weight' => $averageDailyNutrition['weight'] ?? 0,
+                'total_kilocalories' => $averageDailyNutrition['kilocalories'] ?? 0,
+                'total_protein' => $averageDailyNutrition['protein'] ?? 0,
+                'total_fat' => $averageDailyNutrition['fat'] ?? 0,
+                'total_carbohydrate' => $averageDailyNutrition['carbohydrate'] ?? 0,
+                'nutrient_map' => $nutrientMap
+            ]
         ], 200);
     }
 
@@ -557,7 +480,6 @@ class MenuController extends Controller
     protected function validateMenuNutritionRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            // 'menu_id' => 'required|integer|exists:menus,menu_id',
             'weeks' => 'required|array',
             'weeks.*.days' => 'required|array',
             'weeks.*.days.*.meal_times' => 'required|array',

@@ -51,14 +51,13 @@ class TotalWeightService
                 ]));
             }
         }
-        $totals['nutrient_map'] = $nutrientMap->values(); // Convert to array values if needed
+        $totals['nutrient_map'] = $nutrientMap->values(); 
 
         return $totals;
     }
 
     protected function addMacronutrientsToTotals(Collection $nutrientMap, array &$totals): void
     {
-        // Map the specific database names to the totals keys
         $macronutrientsMap = [
             'protein' => 'total_protein',
             'fat' => 'total_fat',
@@ -68,9 +67,9 @@ class TotalWeightService
         foreach ($macronutrientsMap as $dbName => $totalKey) {
             if ($nutrientMap->has($dbName)) {
                 $nutrient = $nutrientMap->get($dbName);
-                // Assuming the weight is the total amount of each macronutrient
+
                 $totals[$totalKey] = $nutrient->weight;
-                // Remove the macronutrient from nutrientMap after adding its total
+
                 $nutrientMap->forget($dbName);
             }
         }
@@ -83,8 +82,6 @@ class TotalWeightService
             $totals['total_price'] += $productData['price'];
             $totals['total_weight'] += $productData['weight'];
             $totals['total_kilocalories'] += round($productData['kilocalories'], 2);
-
-
         }
 
         $nutrientNames = config('nutrients.nutrient_names');
