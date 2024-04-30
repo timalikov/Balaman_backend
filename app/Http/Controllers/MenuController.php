@@ -451,37 +451,108 @@ class MenuController extends Controller
 
     public function calculateMenuNutrition(Request $request)
     {
-
         $this->validateMenuNutritionRequest($request);
 
-        // $menu = Menu::findOrFail($request->input('menu_id'));
-
-        // Initialize total nutrition values
-        $nutritionTotals = ['kcal' => 0, 'protein' => 0, 'carbs' => 0, 'fat' => 0];
+        $nutritionTotals = []; 
         $totalDays = 0;
-        
 
         foreach ($request->input('weeks') as $week) {
             foreach ($week['days'] as $day) {
                 $totalDays++;
                 $dailyTotals = $this->calculateDailyNutrition($day['meal_times']);
 
-                // Aggregate daily totals into overall nutrition totals
-                foreach ($nutritionTotals as $key => &$value) {
-                    $value += $dailyTotals[$key];
+                foreach ($dailyTotals as $key => $value) {
+                    if (!isset($nutritionTotals[$key])) {
+                        $nutritionTotals[$key] = 0;
+                    }
+                    $nutritionTotals[$key] += $value;
                 }
             }
         }
 
-        // Calculate average values for 1 day
         $averageDailyNutrition = $this->calculateAverageDailyNutrition($nutritionTotals, $totalDays);
 
-        // Return the calculated averages in the response
         return response()->json([
             'average_daily_nutrition' => $averageDailyNutrition,
             'total_days' => $totalDays
         ], 200);
     }
+
+    protected function calculateDailyNutrition($mealTimes)
+    {
+        $totals = [];
+
+        foreach ($mealTimes as $mealTime) {
+            foreach ($mealTime['dishes'] as $dishData) {
+                $dish = Dish::with('products')->findOrFail($dishData['dish_id']);
+
+                if (isset($dishData['weight'])) {
+                    $weight = $dishData['weight'];
+                } else {
+                    $weight = $dish->weight;
+                }
+
+                $coefficient = $weight / $dish->weight;
+
+                $totals['weight'] = $weight;
+                $totals['kilocalories'] = (float) $dish->kilocalories * $coefficient;
+                $totals['protein'] = $dish->protein * $coefficient;
+                $totals['fat'] = $dish->fat * $coefficient;
+                $totals['carbohydrate'] = $dish->carbohydrate * $coefficient;
+
+                $nutrientNames = config('nutrients.nutrient_names');
+
+                foreach ($nutrientNames as $name) {
+                    $totals[$name] = 0;
+                }
+
+                if ($dish->has_relation_with_products) {
+                    foreach ($dish->products as $product) {
+                        $nutrients = json_decode($product->pivot->nutrients, true); 
+                    
+                        foreach ($nutrients as $nutrient) {
+                            $nutrientName = $nutrient['name']; 
+                            $nutrientWeight = $nutrient['pivot']['weight'] * $coefficient; 
+                    
+                            if (in_array($nutrientName, $nutrientNames)) {
+                                if (!isset($totals[$nutrientName])) {
+                                    $totals[$nutrientName] = 0; 
+                                }
+                                $totals[$nutrientName] += $nutrientWeight; 
+                            }
+                        }
+                    }
+                }else {
+                    foreach ($dish->nutrients as $nutrient) {
+                        $nutrientName = $nutrient->name;
+                        $nutrientWeight = $nutrient->pivot->weight * $coefficient;
+    
+                        if (in_array($nutrientName, $nutrientNames)) {
+                            if (!isset($totals[$nutrientName])) {
+                                $totals[$nutrientName] = 0;
+                            }
+                            $totals[$nutrientName] += $nutrientWeight;
+                        }
+                    }
+                }
+                
+            }
+        }
+
+        return $totals;
+    }
+
+    protected function calculateAverageDailyNutrition($nutritionTotals, $totalDays)
+    {
+        $averageDailyNutrition = [];
+
+        foreach ($nutritionTotals as $key => $value) {
+            $averageDailyNutrition[$key] = $totalDays > 0 ? round($value / $totalDays, 2) : 0;
+        }
+
+        return $averageDailyNutrition;
+    }
+
 
     protected function validateMenuNutritionRequest(Request $request)
     {
@@ -500,48 +571,6 @@ class MenuController extends Controller
             abort(response()->json($validator->errors(), 422));
         }
 
-    }
-
-    protected function calculateDailyNutrition($mealTimes)
-    {
-        $totals = [
-            'kcal' => 0, 
-            'protein' => 0, 
-            'fat' => 0,
-            'carbs' => 0, 
-        ];
-
-        foreach ($mealTimes as $mealTime) {
-            foreach ($mealTime['dishes'] as $dishData) {
-                $dish = Dish::findOrFail($dishData['dish_id']);
-                $weight = isset($dishData['weight']) ? $dishData['weight'] : $dish->weight;
-
-                if (isset($dishData['weight']) && $dishData['weight'] != 0) {
-                    $totals['kcal'] += $dish->kcal * $weight / 100;
-                    $totals['protein'] += $dish->protein * $weight / 100;
-                    $totals['carbs'] += $dish->carbs * $weight / 100;
-                    $totals['fat'] += $dish->fat * $weight / 100;
-                } else {
-                    $totals['kcal'] += $dish->kcal;
-                    $totals['protein'] += $dish->protein;
-                    $totals['carbs'] += $dish->carbs;
-                    $totals['fat'] += $dish->fat;
-                }
-            }
-        }
-
-        return $totals;
-    }
-
-    protected function calculateAverageDailyNutrition($nutritionTotals, $totalDays)
-    {
-        $averageDailyNutrition = [];
-
-        foreach ($nutritionTotals as $key => $value) {
-            $averageDailyNutrition[$key] = $totalDays > 0 ? $value / $totalDays : 0;
-        }
-
-        return $averageDailyNutrition;
     }
 }
 

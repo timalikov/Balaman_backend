@@ -284,13 +284,12 @@ class DishController extends Controller
                 ->withPivot('weight');
             },
             'menuMealTimes.menu' => function ($query) {
-                // Only select menu_id and name from the Menu
                 $query->select('menu_id', 'name');
             },
             'menuMealTimes.mealTime',
 
-            'dishesProducts' => function ($query) {
-                $query->select('product_id', 'name', 'weight', 'factor_ids');
+            'products' => function ($query) {
+                $query->withPivot('weight', 'price', 'kilocalories', 'nutrients');
             },
         ]);
     
