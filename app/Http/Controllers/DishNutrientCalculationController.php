@@ -46,25 +46,22 @@ class DishNutrientCalculationController extends Controller
 
         $dishes = Dish::findMany($request->input('dishes'));
         $totals = $this->calculateDishTotals($dishes);
-        $nutrientMap = $this->calculateNutrientMap($dishes); // Assume this method aggregates dish nutrients
+        $nutrientMap = $this->calculateNutrientMap($dishes); 
+        $productNutrientMap = [];
 
-        $productNutrientMap = []; // Assuming this will be structured like the dish nutrient map
-
-        // Process products if provided
+        
         $productsInput = $request->has('products') ? $request->input('products') : [];
         if (!empty($productsInput)) {
             $products = $this->productFetchService->completeProductRequest($productsInput);
             if (!empty($products)) {
-                // Assuming calculateProductTotals returns both totals and nutrient_map
                 $productData = $this->calculateProductTotals($products);
                 $productTotals = $productData['totals'];
-                $productNutrientMap = $productData['totals']['nutrient_map']; // Adjust based on actual returned structure
+                $productNutrientMap = $productData['totals']['nutrient_map']; 
             }
         }
 
 
         if (!empty($productTotals) && !empty($productNutrientMap)) {
-            // Merge totals
             foreach ($productTotals as $key => $value) {
                 if (isset($totals[$key])) {
                     $totals[$key] += $value;
@@ -101,6 +98,9 @@ class DishNutrientCalculationController extends Controller
         else {
             $missingNutrients = array_diff($nutrientNames, array_column($nutrientMap, 'name'));
             foreach ($missingNutrients as $missingNutrient) {
+                if ($missingNutrient === 'protein' || $missingNutrient === 'fat' || $missingNutrient === 'carbohydrate') {
+                    continue;
+                }
                 $nutrientMap[] = [
                     'name' => $missingNutrient,
                     'weight' => 0,
@@ -190,11 +190,14 @@ class DishNutrientCalculationController extends Controller
 
         foreach ($dishes as $dish) {
             foreach ($dish->nutrients as $nutrient) {
-                $nutrientKey = $nutrient->name; // Unique identifier for the nutrient, e.g., the name
-                $weight = $nutrient->pivot->weight; // Assuming there's a 'pivot' table with 'weight'
-
+                $nutrientKey = $nutrient->name; 
+                $weight = $nutrient->pivot->weight; 
+                if ($nutrientKey === 'protein' || $nutrientKey === 'fat' || $nutrientKey === 'carbohydrate') {
+                    continue;
+                }
                 if (in_array($nutrientKey, $nutrientNames)) {
                     if (!isset($nutrientMap[$nutrientKey])) {
+                        
                         $nutrientMap[$nutrientKey] = [
                             'name' => $nutrientKey,
                             'weight' => 0,

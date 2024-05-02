@@ -92,6 +92,9 @@ class TotalWeightService
             }
         } else {
             foreach ($nutrientNames as $name) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
@@ -102,6 +105,9 @@ class TotalWeightService
 
         if ($productData['nutrients'] == []) {
             foreach ($nutrientNames as $name) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
@@ -140,6 +146,9 @@ class TotalWeightService
         // check if thr nutrientmap has all the nutrient names from nutrientNames
         foreach ($nutrientNames as $name) {
             if (!$nutrientMap->has($name)) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
                 $nutrientMap->put($name, new Nutrient([
                     'name' => $name,
                     'weight' => 0,
