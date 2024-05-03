@@ -368,7 +368,7 @@ class MenuController extends Controller
                 }
             }
         }
-
+        Log::info('Total days', ['totalDays' => $totalDays]);
         $averageDailyNutrition = $this->calculateAverageDailyNutrition($nutritionTotals, $totalDays);
 
         $nutrientMap = [];
@@ -387,6 +387,7 @@ class MenuController extends Controller
                 ];
             }
         }
+        Log::info('weight', ['weight' => $nutritionTotals['weight'] ?? 0]);
 
         return response()->json([
             'totals' => [
@@ -403,7 +404,13 @@ class MenuController extends Controller
 
     protected function calculateDailyNutrition($mealTimes)
     {
-        $totals = [];
+        $totals = [
+            'weight' => 0,
+            'kilocalories' => 0,
+            'protein' => 0,
+            'fat' => 0,
+            'carbohydrate' => 0,
+        ];
 
         foreach ($mealTimes as $mealTime) {
             foreach ($mealTime['dishes'] as $dishData) {
@@ -417,11 +424,11 @@ class MenuController extends Controller
 
                 $coefficient = $weight / $dish->weight;
 
-                $totals['weight'] = $weight;
-                $totals['kilocalories'] = (float) $dish->kilocalories * $coefficient;
-                $totals['protein'] = $dish->protein * $coefficient;
-                $totals['fat'] = $dish->fat * $coefficient;
-                $totals['carbohydrate'] = $dish->carbohydrate * $coefficient;
+                $totals['weight'] += $weight;
+                $totals['kilocalories'] += (float) $dish->kilocalories * $coefficient;
+                $totals['protein'] += $dish->protein * $coefficient;
+                $totals['fat'] += $dish->fat * $coefficient;
+                $totals['carbohydrate'] += $dish->carbohydrate * $coefficient;
 
                 $nutrientNames = config('nutrients.nutrient_names');
 
