@@ -122,7 +122,6 @@ class TotalWeightService
         $nutrientNames = config('nutrients.nutrient_names');
         $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
 
-        // Log::info($nutrientData['measurement_unit'] . 'klaramen');
         if (isset($nutrientData['name'], $nutrientData['pivot']['weight'], $nutrientData['measurement_unit'])) {
             $name = $nutrientData['name'];
             $weight = $nutrientData['pivot']['weight'];

@@ -14,6 +14,11 @@ use App\Services\MenuStateService;
 use App\Models\MenuStatusTransition;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Models\ProductForMenu;
+use App\Services\NutrientCalculationService;
+use App\Services\WeightCalculationService;
+use App\Services\ProductFetchService;
+use App\Services\TotalWeightService;
 
 
 
@@ -23,15 +28,27 @@ class MenuController extends Controller
 {
     private $menuStateService;
 
-    public function __construct(MenuStateService $menuStateService) {
+    protected $nutrientCalculationService;
+    protected $weightCalculationService;
+    protected $productFetchService;
+    protected $totalWeightService;
+
+    public function __construct(MenuStateService $menuStateService, NutrientCalculationService $nutrientCalculationService, WeightCalculationService $weightCalculationService, ProductFetchService $productFetchService, TotalWeightService $totalWeightService) {
         $this->menuStateService = $menuStateService;
+
+        $this->nutrientCalculationService = $nutrientCalculationService;
+        $this->weightCalculationService = $weightCalculationService;
+        $this->productFetchService = $productFetchService;
+        $this->totalWeightService = $totalWeightService;
+
+//     // JWT authentication is done in the auth:api middleware
+//     $this->middleware('auth:api');
     }
 
 
     // public function __construct()
     // {
-    //     // Assuming JWT authentication is done in the auth:api middleware
-    //     $this->middleware('auth:api');
+
     // }
 
     /**
@@ -95,13 +112,19 @@ class MenuController extends Controller
         
             'weeks.*.days.*.day_number' => 'required|integer|between:1,7',  
             'weeks.*.days.*.meal_times' => 'required|array|min:1',  
+            
         
             'weeks.*.days.*.meal_times.*.meal_time_number' => 'required|integer',
             'weeks.*.days.*.meal_times.*.meal_time_name' => 'required|string',  
             'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1', 
-        
-            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',  
+            'weeks.*.days.*.meal_times.*.products' => 'sometimes|array|min:1', 
+
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'sometimes|required_without:product_id|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.products.*.product_id' => 'sometimes|required_without:dish_id|integer|exists:products,product_id',
+            'weeks.*.days.*.meal_times.*.products.*.factor_ids' => 'sometimes|array',
+
             'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',  
+            'weeks.*.days.*.meal_times.*.products.*.weight' => 'required_with:product_id|numeric',  
         ]);
 
         if ($validator->fails()) {
@@ -129,7 +152,6 @@ class MenuController extends Controller
                 foreach ($validatedData['weeks'] as $weekIndex => $week) {
                     foreach ($week['days'] as $dayIndex => $day) {
                         foreach ($day['meal_times'] as $mealTime) {
-                            Log::info('About to insert meal time', ['meal_time' => $mealTime['meal_time_name']]);
 
                             $menuMealTime = $menu->menuMealTimes()->create([
                                 'week' => $week['week_number'],
@@ -137,12 +159,44 @@ class MenuController extends Controller
                                 'meal_time_name' => $mealTime['meal_time_name'],
                                 'meal_time_number' => $mealTime['meal_time_number'],
                             ]);
-                            Log::info('Meal time inserted', ['menuMealTime' => $menuMealTime]);
 
                             foreach ($mealTime['dishes'] as $dishData) {
                                 $weight = isset($dishData['weight']) ? $dishData['weight'] : Dish::find($dishData['dish_id'])->weight;
 
                                 $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $weight]);
+                            }
+
+                            if (isset($mealTime['products'])) {
+                                foreach ($mealTime['products'] as $productData) {
+                                    $products = $this->productFetchService->completeProductRequest([$productData]);
+
+                                    if (is_null($products) || !is_array($products)) {
+                                        return response()->json(['error' => 'Invalid products data'], 400);
+                                    }
+
+                                    $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+                                    $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+                                    $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+                                    $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+                                    $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+                                }
+
+                                foreach ($nutrientLossAfterThermalProcessing as $productData) {
+                                    $product = ProductForMenu::create([
+                                        'product_id' => $productData['product_id'],
+                                        'menu_id' => $menu->menu_id,
+                                        'factor_ids' => json_encode($productData['factor_ids']),
+                                        'brutto_weight' => $productData['brutto_weight'],
+                                        'netto_weight' => $productData['weight'],
+                                        'nutrients' => json_encode($productData['nutrients']),
+                                    ]);
+                                    
+                                    $menuMealTime->mealProducts()->attach($product->product_id, ['weight' => $product->netto_weight]);
+                                }
                             }
                         }
                     }
@@ -173,6 +227,10 @@ class MenuController extends Controller
 
             'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
             'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1',
+            'weeks.*.days.*.meal_times.*.products' => 'sometimes|array|min:1', 
+
+            'weeks.*.days.*.meal_times.*.products.*.product_id' => 'sometimes|required_without:dish_id|integer|exists:products,product_id',
+            'weeks.*.days.*.meal_times.*.products.*.factor_ids' => 'sometimes|array',
 
             'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
             'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
@@ -196,18 +254,55 @@ class MenuController extends Controller
             $menu->menuMealTimes()->delete();  
 
             if (isset($validatedData['weeks'])) {
-                foreach ($validatedData['weeks'] as $week) {
-                    foreach ($week['days'] as $day) {
+                foreach ($validatedData['weeks'] as $weekIndex => $week) {
+                    foreach ($week['days'] as $dayIndex => $day) {
                         foreach ($day['meal_times'] as $mealTime) {
+
                             $menuMealTime = $menu->menuMealTimes()->create([
                                 'week' => $week['week_number'],
                                 'day_of_week' => $day['day_number'],
-                                'meal_time_id' => $mealTime['meal_time_id'],
+                                'meal_time_name' => $mealTime['meal_time_name'],
+                                'meal_time_number' => $mealTime['meal_time_number'],
                             ]);
 
                             foreach ($mealTime['dishes'] as $dishData) {
                                 $weight = isset($dishData['weight']) ? $dishData['weight'] : Dish::find($dishData['dish_id'])->weight;
+
                                 $menuMealTime->mealDishes()->attach($dishData['dish_id'], ['weight' => $weight]);
+                            }
+
+                            if (isset($mealTime['products'])) {
+                                foreach ($mealTime['products'] as $productData) {
+                                    $products = $this->productFetchService->completeProductRequest([$productData]);
+
+                                    if (is_null($products) || !is_array($products)) {
+                                        return response()->json(['error' => 'Invalid products data'], 400);
+                                    }
+
+                                    $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+                                    $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+                                    $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+                                    $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+                                    $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+                                }
+
+                                foreach ($nutrientLossAfterThermalProcessing as $productData) {
+                                    $product = ProductForMenu::create([
+                                        'product_id' => $productData['product_id'],
+                                        'menu_id' => $menu->menu_id,
+                                        'factor_ids' => json_encode($productData['factor_ids']),
+                                        'brutto_weight' => $productData['brutto_weight'],
+                                        'netto_weight' => $productData['weight'],
+                                        'kilocalories' => $productData['kilocalories'],
+                                        'nutrients' => json_encode($productData['nutrients']),
+                                    ]);
+                                    
+                                    $menuMealTime->mealProducts()->attach($product->product_id, ['weight' => $product->netto_weight]);
+                                }
                             }
                         }
                     }
@@ -264,12 +359,16 @@ class MenuController extends Controller
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber] = [
                     'mealTimeName' => $mealTimeName,
                     'mealTimeNumber' => $mealTimeNumber,
-                    'dishes' => []
+                    'dishes' => [],
+                    'products' => [],
                 ];
             }
     
             foreach ($menuMealTime->mealDishes as $dish) {
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['dishes'][] = $dish->toArray();
+            }
+            foreach ($menuMealTime->mealProducts as $product) {
+                $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = $product->toArray();
             }
         }
     
@@ -354,11 +453,12 @@ class MenuController extends Controller
 
         $nutritionTotals = []; 
         $totalDays = 0;
+        $menu_id = $request->input('menu_id');  
 
         foreach ($request->input('weeks') as $week) {
             foreach ($week['days'] as $day) {
                 $totalDays++;
-                $dailyTotals = $this->calculateDailyNutrition($day['meal_times']);
+                $dailyTotals = $this->calculateDailyNutrition($menu_id, $day['meal_times']);
 
                 foreach ($dailyTotals as $key => $value) {
                     if (!isset($nutritionTotals[$key])) {
@@ -368,7 +468,6 @@ class MenuController extends Controller
                 }
             }
         }
-        Log::info('Total days', ['totalDays' => $totalDays]);
         $averageDailyNutrition = $this->calculateAverageDailyNutrition($nutritionTotals, $totalDays);
 
         $nutrientMap = [];
@@ -387,7 +486,6 @@ class MenuController extends Controller
                 ];
             }
         }
-        Log::info('weight', ['weight' => $nutritionTotals['weight'] ?? 0]);
 
         return response()->json([
             'totals' => [
@@ -402,7 +500,7 @@ class MenuController extends Controller
         ], 200);
     }
 
-    protected function calculateDailyNutrition($mealTimes)
+    protected function calculateDailyNutrition($menu_id, $mealTimes)
     {
         $totals = [
             'weight' => 0,
@@ -411,6 +509,7 @@ class MenuController extends Controller
             'fat' => 0,
             'carbohydrate' => 0,
         ];
+
 
         foreach ($mealTimes as $mealTime) {
             foreach ($mealTime['dishes'] as $dishData) {
@@ -467,6 +566,56 @@ class MenuController extends Controller
                 }
                 
             }
+
+            if (isset($mealTime['products'])) {
+                foreach($mealTime['products'] as $productData) {
+                    $product = ProductForMenu::where('product_id', $productData['product_id'])
+                             ->where('menu_id', $menu_id)
+                             ->firstOrFail();
+
+                    $weight = $productData['weight'];
+
+                    $totals['weight'] += $weight;
+                    $totals['kilocalories'] += $product->kilocalories;
+
+                    $nutrients = json_decode($product->nutrients, true);
+
+                    foreach ($nutrients as $nutrient){
+                        $nutrientName = $nutrient['name'];
+                        $nutrientWeight = $nutrient['pivot']['weight'];
+
+                        if ($nutrientName === 'protein'){
+                            $totals['protein'] += $nutrientWeight;
+                        }elseif ($nutrientName === 'fat'){
+                            $totals['fat'] += $nutrientWeight;
+                        }elseif ($nutrientName === 'carbohydrate'){
+                            $totals['carbohydrate'] += $nutrientWeight;
+                        }
+                    }
+
+                    $nutrientNames = config('nutrients.nutrient_names');
+
+                    foreach ($nutrientNames as $name) {
+                        if ($name == 'protein' || $name == 'fat' || $name == 'carbohydrate'){
+                            continue;
+                        }
+
+                        $totals[$name] = 0;
+                    }
+
+                    foreach ($nutrients as $nutrient) {
+                        $nutrientName = $nutrient['name'];
+                        $nutrientWeight = $nutrient['pivot']['weight'];
+
+                        if (in_array($nutrientName, $nutrientNames)) {
+                            if (!isset($totals[$nutrientName])) {
+                                $totals[$nutrientName] = 0;
+                            }
+                            $totals[$nutrientName] += $nutrientWeight;
+                        }
+                    }
+                }
+            }
         }
 
         return $totals;
@@ -493,7 +642,13 @@ class MenuController extends Controller
             'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
             'weeks.*.days.*.meal_times.*.dishes' => 'required|array',
             'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
-            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
+            'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',            
+
+            'weeks.*.days.*.meal_times.*.products' => 'sometimes|array',
+            'weeks.*.days.*.meal_times.*.products.*.product_id' => 'sometimes|required_with:products|integer|exists:products,product_id',
+            'weeks.*.days.*.meal_times.*.products.*.factor_ids' => 'sometimes|array',
+            'weeks.*.days.*.meal_times.*.products.*.weight' => 'required_with:product_id|numeric',
+
         ]);
 
         if ($validator->fails()) {

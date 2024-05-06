@@ -9,7 +9,7 @@ class MealDish extends Model
 {
     protected $primaryKey = 'meal_dish_id';
 
-    protected $fillable = ['menu_meal_time_id', 'dish_id', 'weight'];
+    protected $fillable = ['menu_meal_time_id', 'dish_id', 'product_id', 'weight'];
 
     public function menuMealTime()
     {

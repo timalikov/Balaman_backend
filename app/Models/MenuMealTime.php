@@ -37,12 +37,18 @@ class MenuMealTime extends Model
     //     return $this->belongsTo(MealTime::class, 'meal_time_id', 'meal_time_id');
     // }
 
-
     public function mealDishes()
     {
         return $this->belongsToMany(Dish::class, 'meal_dishes', 'menu_meal_time_id', 'dish_id')
                     ->withPivot('weight');
     }
+
+    public function mealProducts()
+    {
+        return $this->belongsToMany(Product::class, 'meal_dishes', 'menu_meal_time_id', 'product_id')
+                    ->withPivot('weight');
+    }
+
 
 
 }
