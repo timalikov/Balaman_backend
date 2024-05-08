@@ -188,6 +188,15 @@ class MenuController extends Controller
                                 $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
                                 foreach ($nutrientLossAfterThermalProcessing as $productData) {
+                                    Log::info("menu-meal-time");
+                                    Log::info($menuMealTime->menu_meal_time_id);
+
+                                    // Check for null or invalid menu_meal_time_id
+                                    if (empty($menuMealTime->menu_meal_time_id)) {
+                                        Log::error("menu_meal_time_id is null or invalid");
+                                        continue; // Skip this iteration or handle the case appropriately
+                                    }
+                                    
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
                                         'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
@@ -652,7 +661,7 @@ class MenuController extends Controller
             'weeks' => 'required|array',
             'weeks.*.days' => 'required|array',
             'weeks.*.days.*.meal_times' => 'required|array',
-            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.meal_time_number' => 'sometimes|integer',
             'weeks.*.days.*.meal_times.*.dishes' => 'required|array',
             'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
             'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',            

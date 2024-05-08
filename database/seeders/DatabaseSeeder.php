@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
 
             MealTimesTableSeeder::class,
 
-            // Artisan::call('app:seed-dishes')
+            Artisan::call('app:seed-dishes')
 
         ]);
     

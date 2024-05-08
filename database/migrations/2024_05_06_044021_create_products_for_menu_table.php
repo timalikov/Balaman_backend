@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('nutrients');
 
             $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
-            $table->foreign('menu_id')->references('menu_id')->on('menus')->onDelete('cascade');
+            $table->foreign('menu_meal_time_id')->references('menu_meal_time_id')->on('menu_meal_times')->onDelete('cascade');
             
             $table->timestamps();
         });
