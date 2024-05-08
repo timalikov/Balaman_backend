@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('products_for_menu', function (Blueprint $table) {
             $table->id('product_for_menu_id');
             $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('menu_id');
+            $table->unsignedBigInteger('menu_meal_time_id');
             $table->json('factor_ids');
             $table->float('brutto_weight', 8, 2)->default(100);
             $table->float('netto_weight', 8, 2)->default(100);

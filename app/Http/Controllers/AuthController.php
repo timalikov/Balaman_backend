@@ -24,11 +24,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Register a User.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
+     * @OA\Post(
+     *     path="/api/auth/register",
+     *     summary="Register a new user",
+     *     operationId="register",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "password"},
+     *             @OA\Property(property="name", type="string", description="User's name"),
+     *             @OA\Property(property="email", type="string", format="email", description="User's email address"),
+     *             @OA\Property(property="password", type="string", format="password", description="User's password"),
+     *             @OA\Property(property="role_name", type="string", description="Role assigned to the user (optional)", example="admin")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="User successfully registered"),
+     *     @OA\Response(response=400, description="Validation failed"),
+     *     @OA\Response(response=500, description="Failed to create user")
+     * )
      */
     public function register(Request $request) {
         $validator = Validator::make($request->all(), [
@@ -60,7 +74,6 @@ class AuthController extends Controller
             ], 500);
         }
 
-        // Assign default role if not provided or use the provided role
         $roleName = $request->input('role_name', 'user');
         $user->assignRole($roleName);
     
@@ -92,6 +105,25 @@ class AuthController extends Controller
         return Auth::guard('web')->attempt($credentials);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/auth/login",
+     *     summary="User login",
+     *     operationId="login",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "password"},
+     *             @OA\Property(property="email", type="string", format="email", description="User's email address"),
+     *             @OA\Property(property="password", type="string", format="password", description="User's password")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login successful, returns access and refresh tokens"),
+     *     @OA\Response(response=400, description="Validation failed"),
+     *     @OA\Response(response=401, description="Invalid credentials")
+     * )
+     */
     public function login(Request $request)
     {
         $validator = $this->validateLogin($request);
@@ -111,60 +143,48 @@ class AuthController extends Controller
 
     protected function requestOAuthTokens(Request $request, $grantType)
     {
-        // Base token request data
         $tokenRequestData = [
             'grant_type' => $grantType,
-            'client_id' => config('jwt.oauth_client_id'), // Use actual client_id from your .env or config
-            'client_secret' => config('jwt.oauth_client_secret'), // Use actual client_secret from your .env or config
-            'scope' => '', // Define scopes here if needed
+            'client_id' => config('jwt.oauth_client_id'), 
+            'client_secret' => config('jwt.oauth_client_secret'), 
+            'scope' => '', 
         ];
 
-        // Conditional logic based on grant type
         if ($grantType === 'password') {
-            // For password grant type, include user credentials
             $tokenRequestData['username'] = $request->input('email');
             $tokenRequestData['password'] = $request->input('password');
+            
         } elseif ($grantType === 'refresh_token' && $request->has('refresh_token')) {
-            // For refresh token grant type, include the refresh token
             $tokenRequestData['refresh_token'] = $request->input('refresh_token');
         }
 
-        // Create the request instance
         $tokenRequest = Request::create('/oauth/token', 'POST', $tokenRequestData);
         
-        // Handle the request internally
         $tokenResult = app()->handle($tokenRequest);
 
-        // Assuming the response is JSON, you can decode it
         $responseContent = json_decode($tokenResult->getContent(), true);
 
-        // Check the response status code
         $statusCode = $tokenResult->getStatusCode();
 
-        // Changes start here: Modify the success response to include user info
         if ($statusCode == 200) {
-            // Obtain user info. Note: Ensure the user is already authenticated at this point.
             $user = User::where('email', $request->input('email'))->first();
 
-            // Prepare the custom response structure with tokens and user info
             $customResponse = [
                 'tokens' => [
-                    'access_token' => $responseContent['access_token'], // Assuming these keys exist
-                    'refresh_token' => $responseContent['refresh_token'], // Assuming these keys exist
+                    'access_token' => $responseContent['access_token'], 
+                    'refresh_token' => $responseContent['refresh_token'], 
                 ],
                 'user' => [
                     'id' => $user->id,
-                    'displayName' => $user->name, // Adjust this if your user model uses a different field for the name
+                    'displayName' => $user->name, 
                     'email' => $user->email,
-                    'photoURL' => $user->photo_url, // Adjust this field based on your user model
-                    'role' => $user->roles, // Adjust this to match how roles are stored/retrieved in your app
+                    'photoURL' => $user->photo_url, 
+                    'role' => $user->roles, 
                 ],
             ];
 
-            // Return the custom response
             return response()->json($customResponse);
         } else {
-            // Error handling remains the same
             Log::error("OAuth token request failed: Status Code: $statusCode, Response: " . $tokenResult->getContent());
             return response()->json(['message' => 'Failed to obtain access token'], $statusCode);
         }
@@ -180,20 +200,30 @@ class AuthController extends Controller
     }
 
     /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *     path="/api/auth/refresh-token",
+     *     summary="Refresh an access token",
+     *     operationId="refreshToken",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"refresh_token"},
+     *             @OA\Property(property="refresh_token", type="string", description="Refresh token for generating new access token")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Tokens refreshed successfully"),
+     *     @OA\Response(response=400, description="Validation failed")
+     * )
      */
     public function refreshToken(Request $request){
         
-         // Validate that a refresh token is provided
         $request->validate([
             'refresh_token' => 'required',
         ]);
 
         $grantType = 'refresh_token';
 
-        // Attempt to refresh the token
         $response = $this->requestOAuthTokens($request, $grantType);
 
         return $response;

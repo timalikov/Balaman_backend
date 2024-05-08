@@ -167,28 +167,30 @@ class MenuController extends Controller
                             }
 
                             if (isset($mealTime['products'])) {
-                                foreach ($mealTime['products'] as $productData) {
-                                    $products = $this->productFetchService->completeProductRequest([$productData]);
+                            
+                                $products_json = json_encode($mealTime['products']);
+                                $products_array = json_decode($products_json, true);
 
-                                    if (is_null($products) || !is_array($products)) {
-                                        return response()->json(['error' => 'Invalid products data'], 400);
-                                    }
+                                $products = $this->productFetchService->completeProductRequest($products_array);
 
-                                    $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
-
-                                    $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
-
-                                    $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
-
-                                    $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
-
-                                    $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+                                if (is_null($products) || !is_array($products)) {
+                                    return response()->json(['error' => 'Invalid products data'], 400);
                                 }
+
+                                $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+                                $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+                                $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+                                $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+                                $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
                                 foreach ($nutrientLossAfterThermalProcessing as $productData) {
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
-                                        'menu_id' => $menu->menu_id,
+                                        'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
                                         'factor_ids' => json_encode($productData['factor_ids']),
                                         'brutto_weight' => $productData['brutto_weight'],
                                         'netto_weight' => $productData['weight'],
@@ -272,32 +274,33 @@ class MenuController extends Controller
                             }
 
                             if (isset($mealTime['products'])) {
-                                foreach ($mealTime['products'] as $productData) {
-                                    $products = $this->productFetchService->completeProductRequest([$productData]);
+                            
+                                $products_json = json_encode($mealTime['products']);
+                                $products_array = json_decode($products_json, true);
 
-                                    if (is_null($products) || !is_array($products)) {
-                                        return response()->json(['error' => 'Invalid products data'], 400);
-                                    }
+                                $products = $this->productFetchService->completeProductRequest($products_array);
 
-                                    $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
-
-                                    $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
-
-                                    $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
-
-                                    $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
-
-                                    $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+                                if (is_null($products) || !is_array($products)) {
+                                    return response()->json(['error' => 'Invalid products data'], 400);
                                 }
+
+                                $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+                                $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+                                $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+                                $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+                                $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
                                 foreach ($nutrientLossAfterThermalProcessing as $productData) {
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
-                                        'menu_id' => $menu->menu_id,
+                                        'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
                                         'factor_ids' => json_encode($productData['factor_ids']),
                                         'brutto_weight' => $productData['brutto_weight'],
                                         'netto_weight' => $productData['weight'],
-                                        'kilocalories' => $productData['kilocalories'],
                                         'nutrients' => json_encode($productData['nutrients']),
                                     ]);
                                     
@@ -568,30 +571,30 @@ class MenuController extends Controller
             }
 
             if (isset($mealTime['products'])) {
-                foreach($mealTime['products'] as $productData) {
-                    $product = ProductForMenu::where('product_id', $productData['product_id'])
-                             ->where('menu_id', $menu_id)
-                             ->firstOrFail();
+                            
+                $products_json = json_encode($mealTime['products']);
+                $products_array = json_decode($products_json, true);
 
-                    $weight = $productData['weight'];
+                $products = $this->productFetchService->completeProductRequest($products_array);
 
-                    $totals['weight'] += $weight;
-                    $totals['kilocalories'] += $product->kilocalories;
+                if (is_null($products) || !is_array($products)) {
+                    return response()->json(['error' => 'Invalid products data'], 400);
+                }
 
-                    $nutrients = json_decode($product->nutrients, true);
+                $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-                    foreach ($nutrients as $nutrient){
-                        $nutrientName = $nutrient['name'];
-                        $nutrientWeight = $nutrient['pivot']['weight'];
+                $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
 
-                        if ($nutrientName === 'protein'){
-                            $totals['protein'] += $nutrientWeight;
-                        }elseif ($nutrientName === 'fat'){
-                            $totals['fat'] += $nutrientWeight;
-                        }elseif ($nutrientName === 'carbohydrate'){
-                            $totals['carbohydrate'] += $nutrientWeight;
-                        }
-                    }
+                $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+                $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+                $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+
+                foreach ($nutrientLossAfterThermalProcessing as $productData) {
+
+                    $totals['weight'] += $productData['weight'];
+                    $totals['kilocalories'] += $productData['kilocalories'];
 
                     $nutrientNames = config('nutrients.nutrient_names');
 
@@ -602,10 +605,18 @@ class MenuController extends Controller
 
                         $totals[$name] = 0;
                     }
-
-                    foreach ($nutrients as $nutrient) {
+                    
+                    foreach ($productData['nutrients'] as $nutrient){
                         $nutrientName = $nutrient['name'];
                         $nutrientWeight = $nutrient['pivot']['weight'];
+
+                        if ($nutrientName === 'protein'){
+                            $totals['protein'] += $nutrientWeight;
+                        }elseif ($nutrientName === 'fat'){
+                            $totals['fat'] += $nutrientWeight;
+                        }elseif ($nutrientName === 'carbohydrate'){
+                            $totals['carbohydrate'] += $nutrientWeight;
+                        }
 
                         if (in_array($nutrientName, $nutrientNames)) {
                             if (!isset($totals[$nutrientName])) {
@@ -613,8 +624,10 @@ class MenuController extends Controller
                             }
                             $totals[$nutrientName] += $nutrientWeight;
                         }
+
                     }
                 }
+            
             }
         }
 
