@@ -27,16 +27,13 @@ class TotalWeightService
             $this->processProductData($productData, $totals, $nutrientMap);
         }
 
-        // Round weights in nutrientMap after all processing
         $nutrientMap->transform(function ($nutrient) {
             $nutrient->weight = round($nutrient->weight, 2);
             return $nutrient;
         });
 
-        // Extract macronutrients' values and add them to totals
         $this->addMacronutrientsToTotals($nutrientMap, $totals);
 
-        // check if nutrientMap has all the nutrient names from nutrientNames except macronutrients
         $nutrientNames = config('nutrients.nutrient_names');
         $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
         foreach ($nutrientNames as $name) {

@@ -93,6 +93,9 @@ class NutrientCalculationController extends Controller
 
         $nutrientNames = config('nutrients.nutrient_names');
         foreach ($nutrientNames as $name) {
+            if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                continue;
+            }
             $found = false;
             foreach ($processedProductDetails['nutrients'] as $nutrient) {
                 if ($nutrient['name'] === $name) {

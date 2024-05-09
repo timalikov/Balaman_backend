@@ -120,9 +120,9 @@ class DishController extends Controller
             'recipe_description' => 'nullable|string',
             'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
             'dish_category_code' => 'nullable|string|max:255',
-            // 'kilocalories' => 'required|numeric',
-            // 'kilocalories_with_fiber' => 'nullable|numeric',
-            // 'price' => 'required|numeric',
+            'kilocalories' => 'sometimes|numeric',
+            'kilocalories_with_fiber' => 'sometimes|numeric',
+            'price' => 'sometimes|numeric',
             'image_url' => 'nullable|url',
             'health_factor' => 'nullable|numeric',
 

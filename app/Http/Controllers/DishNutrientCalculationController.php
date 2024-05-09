@@ -88,13 +88,16 @@ class DishNutrientCalculationController extends Controller
         $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
         if (empty($nutrientMap)) {
             foreach ($nutrientNames as $nutrientName) {
+                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                    continue;
+                }
                 $nutrientMap[] = [
                     'name' => $nutrientName,
                     'weight' => 0,
                     'measurement_unit' => $nutrientMeasurements[$nutrientName] ?? 'g',
                 ];
             }
-        } // else check that all nutrients are present that are listed in config('nutrients.nutrient_names')
+        }
         else {
             $missingNutrients = array_diff($nutrientNames, array_column($nutrientMap, 'name'));
             foreach ($missingNutrients as $missingNutrient) {

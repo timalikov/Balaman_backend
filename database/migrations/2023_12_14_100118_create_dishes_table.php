@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id('dish_id');
             $table->string('bls_code')->unique();
             $table->string('name');
-            $table->string('description')->nullable();
-            $table->string('recipe_description')->nullable();
+            $table->string('description', 5000)->nullable();
+            $table->string('recipe_description', 5000)->nullable();
 
             //dish category
             $table->unsignedBigInteger('dish_category_id');
