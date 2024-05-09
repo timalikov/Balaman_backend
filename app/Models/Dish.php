@@ -33,7 +33,7 @@ class Dish extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'dishes_products', 'dish_id', 'product_id')
-                    ->withPivot(['weight', 'price', 'kilocalories', 'nutrients']);
+                    ->withPivot(['weight', 'price', 'kilocalories', 'nutrients', 'factor_ids']);
     }
 
     public function menuMealTimes()
