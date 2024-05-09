@@ -88,7 +88,7 @@ class DishNutrientCalculationController extends Controller
         $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
         if (empty($nutrientMap)) {
             foreach ($nutrientNames as $nutrientName) {
-                if ($name === 'protein' || $name === 'fat' || $name === 'carbohydrate') {
+                if ($nutrientName === 'protein' || $nutrientName === 'fat' || $nutrientName === 'carbohydrate') {
                     continue;
                 }
                 $nutrientMap[] = [
