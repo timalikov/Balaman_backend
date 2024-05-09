@@ -188,18 +188,16 @@ class MenuController extends Controller
                                 $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
                                 foreach ($nutrientLossAfterThermalProcessing as $productData) {
-                                    Log::info("menu-meal-time");
-                                    Log::info($menuMealTime->menu_meal_time_id);
 
-                                    // Check for null or invalid menu_meal_time_id
                                     if (empty($menuMealTime->menu_meal_time_id)) {
                                         Log::error("menu_meal_time_id is null or invalid");
-                                        continue; // Skip this iteration or handle the case appropriately
+                                        continue; 
                                     }
                                     
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
                                         'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
+                                        Log::info("menu_meal_time-id: " . $menuMealTime->menu_meal_time_id),
                                         'factor_ids' => json_encode($productData['factor_ids']),
                                         'brutto_weight' => $productData['brutto_weight'],
                                         'netto_weight' => $productData['weight'],

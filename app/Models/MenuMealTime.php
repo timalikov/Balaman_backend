@@ -21,31 +21,22 @@ class MenuMealTime extends Model
         'week',
     ];
 
-    /**
-     * Menu relationship.
-     */
     public function menu()
     {
         return $this->belongsTo(Menu::class, 'menu_id', 'menu_id');
     }
 
-    /**
-     * MealTime relationship.
-     */
-    // public function mealTime()
-    // {
-    //     return $this->belongsTo(MealTime::class, 'meal_time_id', 'meal_time_id');
-    // }
-
     public function mealDishes()
     {
         return $this->belongsToMany(Dish::class, 'meal_dishes', 'menu_meal_time_id', 'dish_id')
+                    ->wherePivot('product_id', null)  
                     ->withPivot('weight');
     }
 
     public function mealProducts()
     {
         return $this->belongsToMany(Product::class, 'meal_dishes', 'menu_meal_time_id', 'product_id')
+                    ->wherePivot('dish_id', null) 
                     ->withPivot('weight');
     }
 

@@ -10,7 +10,7 @@ class ProductForMenu extends Model
     protected $table = 'products_for_menu';
     protected $primaryKey = 'product_for_menu_id';
 
-    protected $fillable = ['product_id', 'menu_id', 'factor_ids', 'brutto_weight', 'netto_weight', 'nutrients'];
+    protected $fillable = ['product_id', 'menu_meal_time_id', 'factor_ids', 'brutto_weight', 'netto_weight', 'nutrients'];
 
     use HasFactory;
 }
