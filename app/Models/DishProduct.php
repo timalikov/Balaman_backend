@@ -14,7 +14,11 @@ class DishProduct extends Model
     protected $primaryKey = 'dish_product_id';
 
     protected $fillable = [
-        'dish_id', 'product_id', 'name', 'weight', 'price', 'kilocalories', 'factor_ids', 'nutrients'
+        'dish_id', 'product_id', 'name', 'weight', 'price', 'kilocalories', 'nutrients'
+    ];
+
+    protected $casts = [
+        'factor_ids' => 'array', 
     ];
 
     public function dish()

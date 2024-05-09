@@ -270,14 +270,12 @@ class DishController extends Controller
         }
         return response()->json($dish, 201);
     }
-    /**
-     * Display the specified resource.
-     */
+   
+
     public function show(int $id)
     {
         $dish = Dish::findOrFail($id);
     
-        // Eager load nutrients and MenuMealTimes with restricted Menu fields
         $dish->load([
             'nutrients' => function ($query) {
                 $query->whereIn('name', config('nutrients.nutrient_names'))
@@ -289,23 +287,24 @@ class DishController extends Controller
             'menuMealTimes.mealTime',
 
             'products' => function ($query) {
-                $query->withPivot('weight', 'price', 'kilocalories', 'nutrients');
+                $query->withPivot('weight', 'price', 'kilocalories', 'nutrients', 'factor_ids');
             },
         ]);
     
-        // Transform the data to include only the menu id and name
         $menus = $dish->menuMealTimes->map(function ($menuMealTime) {
             return [
                 'menu_id' => $menuMealTime->menu->menu_id,
                 'name' => $menuMealTime->menu->name,
             ];
-        })->unique('menu_id')->values(); // Ensures each menu is listed only once and reindexes the array
+        })->unique('menu_id')->values(); 
     
-        // Add menus information directly to the dish object
         $dish->menus = $menus;
     
-        // Remove menuMealTimes relationship to clean up the response
         unset($dish->menuMealTimes);
+
+        $dish->products->each(function ($product) {
+            $product->pivot->factor_ids = json_decode($product->pivot->factor_ids, true);
+        });
     
         return response()->json($dish);
     }

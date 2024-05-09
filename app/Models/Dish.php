@@ -19,6 +19,8 @@ class Dish extends Model
         'has_relation_with_products', 'health_factor', 'protein', 'fat', 'carbohydrate'
     ];
 
+    
+
     public function dishCategory()
     {
         return $this->belongsTo(DishCategory::class, 'dish_category_id', 'dish_category_id');
