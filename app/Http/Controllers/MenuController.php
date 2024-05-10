@@ -234,12 +234,14 @@ class MenuController extends Controller
             'weeks.*.days.*.day_number' => 'required|integer|between:1,7',
             'weeks.*.days.*.meal_times' => 'required|array|min:1',
 
-            'weeks.*.days.*.meal_times.*.meal_time_id' => 'required|integer|exists:meal_times,meal_time_id',
+            'weeks.*.days.*.meal_times.*.meal_time_number' => 'required|integer',
+            'weeks.*.days.*.meal_times.*.meal_time_name' => 'required|string',
             'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1',
             'weeks.*.days.*.meal_times.*.products' => 'sometimes|array|min:1', 
 
             'weeks.*.days.*.meal_times.*.products.*.product_id' => 'sometimes|required_without:dish_id|integer|exists:products,product_id',
             'weeks.*.days.*.meal_times.*.products.*.factor_ids' => 'sometimes|array',
+            'weeks.*.days.*.meal_times.*.products.*.weight' => 'sometimes|integer',
 
             'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
             'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',
@@ -302,9 +304,16 @@ class MenuController extends Controller
                                 $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
                                 foreach ($nutrientLossAfterThermalProcessing as $productData) {
+
+                                    if (empty($menuMealTime->menu_meal_time_id)) {
+                                        Log::error("menu_meal_time_id is null or invalid");
+                                        continue; 
+                                    }
+                                    
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
                                         'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
+                                        Log::info("menu_meal_time-id: " . $menuMealTime->menu_meal_time_id),
                                         'factor_ids' => json_encode($productData['factor_ids']),
                                         'brutto_weight' => $productData['brutto_weight'],
                                         'netto_weight' => $productData['weight'],
