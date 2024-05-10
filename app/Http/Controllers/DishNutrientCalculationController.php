@@ -9,6 +9,7 @@ use App\Services\WeightCalculationService;
 use App\Services\ProductFetchService;
 use App\Services\TotalWeightService;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class DishNutrientCalculationController extends Controller
 {
@@ -79,7 +80,7 @@ class DishNutrientCalculationController extends Controller
                     }
                 }
                 if (!$found) {
-                    $nutrientMap[] = $nutrientInfo; // Add new nutrient to the map
+                    $nutrientMap[] = $nutrientInfo; 
                 }
             }
         }
@@ -131,7 +132,7 @@ class DishNutrientCalculationController extends Controller
         ];
 
         foreach ($dishes as $dish) {
-            $totals['total_price'] += $dish->price; // Assuming these properties exist and are named this way
+            $totals['total_price'] += $dish->price; 
             $totals['total_weight'] += $dish->weight;
             $totals['total_kilocalories'] += $dish->kilocalories;
 
@@ -147,38 +148,17 @@ class DishNutrientCalculationController extends Controller
     {
         $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
 
-        // Log::info('customWeightAdjustedProducts');
-        // Log::info($customWeightAdjustedProducts);
-        // Correct
-
         $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
 
-        // Log::info('weightLossAfterColdProcessing');
-        // Log::info($weightLossAfterColdProcessing);
-        // Correct
-        
         $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
-
-        // Log::info('customWeightAdjustedAfterColdProcessing');
-        // Log::info($customWeightAdjustedAfterColdProcessing);
-        // 
 
         $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
-        // Log::info('weightLossAfterThermalProcessing');
-        // Log::info($weightLossAfterThermalProcessing);
-
-        // Calculate nutrients for the products
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
-
-        // Log::info('nutrientLossAfterThermalProcessing');
-        // Log::info($nutrientLossAfterThermalProcessing);
 
         $totals = $this->totalWeightService->calculateTotals($nutrientLossAfterThermalProcessing);
 
-        // Prepare the response
         $response = [
-            // 'products' => $productsWithUpdatedNutrients,
             'totals' => $totals
         ];
 
@@ -190,27 +170,52 @@ class DishNutrientCalculationController extends Controller
     {
         $nutrientMap = [];
         $nutrientNames = config('nutrients.nutrient_names');
-
+        $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
+        
         foreach ($dishes as $dish) {
-            foreach ($dish->nutrients as $nutrient) {
-                $nutrientKey = $nutrient->name; 
-                $weight = $nutrient->pivot->weight; 
-                if ($nutrientKey === 'protein' || $nutrientKey === 'fat' || $nutrientKey === 'carbohydrate') {
-                    continue;
-                }
-                if (in_array($nutrientKey, $nutrientNames)) {
-                    if (!isset($nutrientMap[$nutrientKey])) {
-                        
-                        $nutrientMap[$nutrientKey] = [
-                            'name' => $nutrientKey,
-                            'weight' => 0,
-                            'measurement_unit' => 'g',
-                        ];
+            if ($dish->has_relation_with_products) {
+                foreach ($dish->products as $product) {
+                    foreach ($product->nutrients as $nutrient) {
+                        $nutrientKey = $nutrient->name;
+                        $weight = $nutrient->pivot->weight;
+                        if ($nutrientKey === 'protein' || $nutrientKey === 'fat' || $nutrientKey === 'carbohydrate') {
+                            continue;
+                        }
+                        if (in_array($nutrientKey, $nutrientNames)) {
+                            if (!isset($nutrientMap[$nutrientKey])) {
+                                $nutrientMap[$nutrientKey] = [
+                                    'name' => $nutrientKey,
+                                    'weight' => 0,
+                                    'measurement_unit' => $nutrientMeasurements[$nutrientKey] ?? 'g',
+                                ];
+                            }
+                            $nutrientMap[$nutrientKey]['weight'] += $weight;
+                        }
                     }
-                    $nutrientMap[$nutrientKey]['weight'] += $weight;
                 }
-
             }
+            else{
+                foreach ($dish->nutrients as $nutrient) {
+                    $nutrientKey = $nutrient->name; 
+                    $weight = $nutrient->pivot->weight; 
+                    if ($nutrientKey === 'protein' || $nutrientKey === 'fat' || $nutrientKey === 'carbohydrate') {
+                        continue;
+                    }
+                    if (in_array($nutrientKey, $nutrientNames)) {
+                        if (!isset($nutrientMap[$nutrientKey])) {
+                            
+                            $nutrientMap[$nutrientKey] = [
+                                'name' => $nutrientKey,
+                                'weight' => 0,
+                                'measurement_unit' => $nutrientMeasurements[$nutrientKey] ?? 'g',
+                            ];
+                        }
+                        $nutrientMap[$nutrientKey]['weight'] += $weight;
+                    }
+    
+                }
+            }
+            
         }
 
         // Convert to a numerically indexed array
