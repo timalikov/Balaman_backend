@@ -15,7 +15,7 @@ use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DishNutrientCalculationController;
 use App\Http\Controllers\NutritionCalculatorController;
-use App\Http\Controllers\ManuLayoutController;
+use App\Http\Controllers\MenuLayoutController;
 
 
 /*
@@ -124,4 +124,4 @@ Route::post('/menus/{menu}/update-status', [MenuController::class, 'updateMenuSt
 Route::post('/calculate-average-daily-nutrition', [MenuController::class, 'calculateMenuNutrition']);
 
 // generate menu layout 
-Route::post('/generate-menu-layout', [ManuLayoutController::class, 'generate']);
+Route::post('/generate-menu-layout', [MenuLayoutController::class, 'generate']);

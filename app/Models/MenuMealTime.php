@@ -40,6 +40,14 @@ class MenuMealTime extends Model
                     ->withPivot('weight');
     }
 
+    public function productFactors()
+    {
+        return $this->belongsToMany(Product::class, 'products_for_menu', 'menu_meal_time_id', 'product_id')
+                    ->withPivot('factor_ids') 
+                    ->as('productDetails');
+    }
+
+
 
 
 }

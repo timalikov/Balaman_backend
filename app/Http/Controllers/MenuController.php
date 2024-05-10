@@ -351,53 +351,86 @@ class MenuController extends Controller
     protected function organizeMealPlan($menu)
     {
         $weeks = [];
-    
+
         foreach ($menu->menuMealTimes as $menuMealTime) {
             $weekNumber = $menuMealTime->week;
             $dayNumber = $menuMealTime->day_of_week;
             $mealTimeName = $menuMealTime->meal_time_name;
             $mealTimeNumber = $menuMealTime->meal_time_number;
-    
+
             if (!isset($weeks[$weekNumber])) {
                 $weeks[$weekNumber] = [];
             }
             if (!isset($weeks[$weekNumber][$dayNumber])) {
                 $weeks[$weekNumber][$dayNumber] = [];
             }
-    
+
             if (!isset($weeks[$weekNumber][$dayNumber][$mealTimeNumber])) {
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber] = [
-                    'mealTimeName' => $mealTimeName,
-                    'mealTimeNumber' => $mealTimeNumber,
+                    'meal_time_name' => $mealTimeName,
+                    'meal_time_number' => $mealTimeNumber,
                     'dishes' => [],
                     'products' => [],
                 ];
             }
-    
+
             foreach ($menuMealTime->mealDishes as $dish) {
-                $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['dishes'][] = $dish->toArray();
+                $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['dishes'][] = [
+                    'dish_id' => $dish->dish_id,
+                    'name' => $dish->name,
+                ];
             }
+
+            $menuMealTime->load('productFactors');
+            
             foreach ($menuMealTime->mealProducts as $product) {
-                $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = $product->toArray();
+                // $productDetails = $menuMealTime->productFactors->where('product_id', $product->product_id)->first();
+                // $factorIds = $productDetails->pivot->factor_ids;
+
+                // Log::info("productFactorsgoi: " . json_encode($factorIds));
+
+
+                // Log::info("productFactorsgoi: " . $product->productDetails);
+                // Log::info("productFactorsgoi2: " . json_encode($factors));
+
+                $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = [
+                    'product_id' => $product->product_id,
+                    'name' => $product->name,
+                    'weight' => $product->pivot->weight,
+                    // 'factor_id' => $product->productDetails->pivot->factor_ids,  // Include the factor_id if available
+                ];
             }
         }
-    
+
         return $this->sortWeeksAndDays($weeks);
     }
+
     
     protected function sortWeeksAndDays($weeks)
     {
         ksort($weeks);
-        foreach ($weeks as $week => &$days) {
+        $sortedWeeks = [];
+
+        foreach ($weeks as $week => $days) {
             ksort($days);
-            foreach ($days as $day => &$mealTimes) {
+            $sortedDays = [];
+
+            foreach ($days as $day => $mealTimes) {
                 ksort($mealTimes); 
-                $mealTimes = array_values($mealTimes); 
+                $mealTimes = array_values($mealTimes);  
+                $sortedDays[] = [
+                    'day' => $day,  
+                    'meal_times' => $mealTimes
+                ];  
             }
+
+            $sortedWeeks[] = ['days' => $sortedDays]; 
         }
-    
-        return $weeks;
+
+        return $sortedWeeks;  
     }
+
+
     
 
     public function getMealTimesByWeekAndDay(Request $request)
@@ -656,12 +689,12 @@ class MenuController extends Controller
     protected function validateMenuNutritionRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'weeks' => 'required|array',
-            'weeks.*.days' => 'required|array',
-            'weeks.*.days.*.meal_times' => 'required|array',
+            'weeks' => 'sometimes|array',
+            'weeks.*.days' => 'sometimes|array',
+            'weeks.*.days.*.meal_times' => 'sometimes|array',
             'weeks.*.days.*.meal_times.*.meal_time_number' => 'sometimes|integer',
-            'weeks.*.days.*.meal_times.*.dishes' => 'required|array',
-            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'required|integer|exists:dishes,dish_id',
+            'weeks.*.days.*.meal_times.*.dishes' => 'sometimes|array',
+            'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'sometimes|integer|exists:dishes,dish_id',
             'weeks.*.days.*.meal_times.*.dishes.*.weight' => 'sometimes|numeric',            
 
             'weeks.*.days.*.meal_times.*.products' => 'sometimes|array',
