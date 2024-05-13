@@ -15,15 +15,15 @@ class RolesTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks to avoid constraint violations
         Schema::disableForeignKeyConstraints();
-        // Truncate the table
         DB::table('roles')->truncate();
-        // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
         $adminRole = Role::create(['name' => 'admin']);
+
         $userRole = Role::create(['name' => 'user']);
+        $nutritionistRole = Role::create(['name' => 'nutritionist']);
+        $organizationRole = Role::create(['name' => 'organization']);
 
         $adminRole->givePermissionTo('all');
     }
