@@ -13,7 +13,7 @@ class NutrientCalculationService
 
     public function calculateWeight(array $products)
     {
-        foreach ($products as &$productData) { // Use reference (&) to modify original array elements
+        foreach ($products as &$productData) { 
             if (isset($productData['factor_ids'], $productData['weight'], $productData['product_id'])) {
                 $productId = $productData['product_id'];
                 $factorIds = $productData['factor_ids'];
@@ -21,14 +21,13 @@ class NutrientCalculationService
 
                 $coefficient = $this->getCoefficients($productId, $factorIds);
 
-                // Update the weight in the $products array
                 $productData['weight'] = round($productData['weight'] * $coefficient, 2);
                 if (!isset($productData['brutto_weight'])) {
                     $productData['brutto_weight'] = $weight;
                 } 
             }
         }
-        unset($productData); // Unset reference to the last element
+        unset($productData); 
 
         return $products;
     }
@@ -37,31 +36,31 @@ class NutrientCalculationService
     {
         foreach ($products as &$productData) {
             if (isset($productData['factor_ids'], $productData['weight'], $productData['product_id'])) {
-                // write condition 
                 $productId = $productData['product_id'];
                 $factorIds = $productData['factor_ids'];
                 $weight = $productData['weight'];
 
-                // Filter out factor_id = 1 from the factorIds array
                 $filteredFactorIds = array_filter($factorIds, function($factorId) {
                     return $factorId != 1;
                 });
 
-                // If there are no remaining factors, skip the coefficient calculation
                 if (empty($filteredFactorIds)) {
-                    continue; // Skip this iteration, move to the next product
+                    continue; 
                 }
 
                 $coefficient = $this->getCoefficients($productId, $filteredFactorIds);
 
-                // Update the weight in the $products array
                 $productData['weight'] = round($productData['weight'] * $coefficient, 2);
                 if (!isset($productData['brutto_weight'])) {
                     $productData['brutto_weight'] = $weight;
                 } 
             }
+            $weight = $productData['weight'];
+            if (!isset($productData['brutto_weight'])) {
+                $productData['brutto_weight'] = $weight;
+            } 
         }
-        unset($productData); // Unset reference to the last element
+        unset($productData); 
 
         return $products;
     }
@@ -71,26 +70,27 @@ class NutrientCalculationService
     {
         foreach ($products as &$productData) {
             if (isset($productData['factor_ids'], $productData['weight'], $productData['product_id'])) {
-                // Check if factor_ids contains the value 1
                 if (in_array(1, $productData['factor_ids'])) {
                     $productId = $productData['product_id'];
-                    $factorIds = [1]; // Consider only factor_id = 1 for calculation
+                    $factorIds = [1]; 
                     $weight = $productData['weight'];
 
                     $coefficient = $this->getCoefficients($productId, $factorIds);
 
-                    // Update the weight in the $products array only for factor_id = 1
                     $productData['weight'] = round($productData['weight'] * $coefficient, 2);
                     if (!isset($productData['brutto_weight'])) {
                         $productData['brutto_weight'] = $weight;
                     } 
                 } else {
-                    // If factor_ids does not contain the value 1, skip the coefficient calculation
-                    continue; // Skip this iteration, move to the next product
+                    $weight = $productData['weight'];
+                    if (!isset($productData['brutto_weight'])) {
+                        $productData['brutto_weight'] = $weight;
+                    } 
+                    continue; 
                 }
             }
         }
-        unset($productData); // Unset reference to the last element
+        unset($productData); 
 
         return $products;
     }

@@ -16,7 +16,7 @@ return [
     */
 
 
-    'paths' => ['*'],
+    'paths' => ['*', 'api/generate-menu-layout'],
     'allowed_methods' => ['*'],
     'allowed_origins' => ['*'],
     'allowed_origins_patterns' => [],

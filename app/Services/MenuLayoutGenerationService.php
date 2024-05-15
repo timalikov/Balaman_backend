@@ -29,7 +29,6 @@ class MenuLayoutGenerationService{
         $selectedDayNumber = $request->input('day_number'); 
         $selectedWeekNumber = $request->input('week_number');
 
-        // Fetch data for the selected day and week within the identified menu
         $meals = $menu->menuMealTimes()->where([
             ['day_of_week', '=', $selectedDayNumber],
             ['week', '=', $selectedWeekNumber],
@@ -65,18 +64,21 @@ class MenuLayoutGenerationService{
         }
         
 
-        // Save the file
-        $fileName = 'меню_раскладка.docx';
+        $fileName = 'menu_doc11.docx';
         try {
-            // Your existing code to generate the document
             $phpWord->save($fileName, 'Word2007', true);
         } catch (\Exception $e) {
             Log::error("Error generating document: " . $e->getMessage());
             return response()->json(['error' => 'Failed to generate document'], 500);
         }
 
-        // Return the file
-        return response()->download($fileName)->deleteFileAfterSend(true);
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Access-Control-Allow-Origin' => '*', // CORS Header
+        ];
+
+        return response()->download($fileName, $fileName, $headers)->deleteFileAfterSend(true);
 
     }
 }

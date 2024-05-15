@@ -194,13 +194,13 @@ class MenuController extends Controller
                                         continue; 
                                     }
                                     
+
                                     $product = ProductForMenu::create([
                                         'product_id' => $productData['product_id'],
                                         'menu_meal_time_id' => $menuMealTime->menu_meal_time_id,
-                                        Log::info("menu_meal_time-id: " . $menuMealTime->menu_meal_time_id),
                                         'factor_ids' => json_encode($productData['factor_ids']),
-                                        'brutto_weight' => $productData['brutto_weight'],
-                                        'netto_weight' => $productData['weight'],
+                                        'brutto_weight' => json_encode($productData['brutto_weight']),
+                                        'netto_weight' => json_encode($productData['weight']),
                                         'nutrients' => json_encode($productData['nutrients']),
                                     ]);
                                     
