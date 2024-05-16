@@ -16,9 +16,6 @@ class TechnologicalCardGenerationService{
     public function generateTechnologicalCard($name, $description, $products)
     {
 
-        // Log::info('Generating technological card');
-        // Log::info($products);
-        
         $totals = [
             'protein' => 0,
             'fat' => 0,
@@ -53,7 +50,6 @@ class TechnologicalCardGenerationService{
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
 
-        // Create a bold font style object
         $boldFontStyle = new Font();
         $boldFontStyle->setName('Arial');
         $boldFontStyle->setSize(11);
@@ -75,27 +71,19 @@ class TechnologicalCardGenerationService{
 
         $section->addText("Наименование блюда: " . (isset($name) ? $name : "___________" ), $boldFontStyle, array('align' => 'center'));
 
-        
-
-         // Add a new section
-        // $section = $phpWord->addSection();
 
         $section->addText("");
         $section->addText("");
 
-        // Define the style for the table
         $styleTable = ['borderSize' => 6, 'borderColor' => '999999'];
         $styleCell = ['valign' => 'center'];
         $styleCellBTLR = ['valign' => 'center', 'textDirection' => Cell::TEXT_DIR_BTLR];
         $fontStyle = ['bold' => true, 'align' => 'center'];
 
-        // Add table to the section
         $table = $section->addTable($styleTable);
 
-        // Add the header row
         $table->addRow();
 
-        // Define the headers
         $headers = ["Наименование Продукта", "Вес Брутто", "Вес Нетто", "Белки", "Жиры", "Углеводы", "Калорийность"];
         
         foreach ($headers as $header) {
@@ -104,13 +92,11 @@ class TechnologicalCardGenerationService{
 
 
 
-        // Iterate over products and add a row for each
         foreach ($products as $productData) {
             $table->addRow();
             $table->addCell(2000)->addText($productData['name'] ?? '');
-            $table->addCell(2000)->addText($productData['brutto_weight'] ?? ''); // Assuming 'weight' is the gross weight
-            //net weight
-            $table->addCell(2000)->addText($productData['weight']); // Assuming 'weight' is the gross weight
+            $table->addCell(2000)->addText($productData['brutto_weight'] ?? ''); 
+            $table->addCell(2000)->addText($productData['weight']); 
             $totals['weight'] += $productData['weight'];
 
             $proteinValue = $fatValue = $carbohydrateValue = 0;
@@ -147,7 +133,6 @@ class TechnologicalCardGenerationService{
             
         }
 
-        // add totals to the table
         $table->addRow();
         $table->addCell(2000)->addText("Итого");
         $table->addCell(2000)->addText("");
@@ -172,17 +157,14 @@ class TechnologicalCardGenerationService{
 
         $table2->addRow();
 
-        // All vitamins separated into 2 rows
         $vitaminHeaders = ["A", "D", "E", "K", "B1", "B2", "B3"];
         $vitaminHeaders2 = ["B5", "B6", "B7", "B9", "B12", "C"];
 
-        // First row Headers
         $table2->addCell(1750, $styleCell)->addText("Витамины", $boldFontStyle2);
         foreach ($vitaminHeaders as $header) {
             $table2->addCell(1750, $styleCell)->addText($header, $boldFontStyle2);
         }
         
-        // Fill the first row's values (create second row)
         $table2->addRow();
         $table2->addCell(1750)->addText("");
         foreach ($vitaminHeaders as $header) {
@@ -190,14 +172,12 @@ class TechnologicalCardGenerationService{
             $table2->addCell(1750, $styleCell)->addText($totals[$nutrientName] ?? '');
         }
 
-        // Second row Headers
         $table2->addRow();
         $table2->addCell(1750)->addText("", $boldFontStyle2);
         foreach ($vitaminHeaders2 as $header) {
             $table2->addCell(1750, $styleCell)->addText($header, $boldFontStyle2);
         }
 
-        // Fill the second row's values (create third row)
         $table2->addRow();
         $table2->addCell(1750)->addText("");
         foreach ($vitaminHeaders2 as $header) {
@@ -206,34 +186,29 @@ class TechnologicalCardGenerationService{
         }
 
 
-        // All minerals separated into 2 rows
         $mineralHeaders = ["potassium", "calcium", "magnesium", "phosphorus", "iron", "zinc", "copper"];
         $mineralHeadersInRussian = ["Калий", "Кальций", "Магний", "Фосфор", "Железо", "Цинк", "Медь"];
         $mineralHeaders2 = [ "iodine", "sodium"];
         $mineralHeadersInRussian2 = ["Йод", "Натрий"];
 
-        // First row Headers
         $table2->addRow();
         $table2->addCell(1750)->addText("Минералы", $boldFontStyle2);
         foreach ($mineralHeadersInRussian as $header) {
             $table2->addCell(1750, $styleCell)->addText($header, $boldFontStyle2);
         }
 
-        // Fill the first row's values (create second row)
         $table2->addRow();
         $table2->addCell(1750)->addText("");
         foreach ($mineralHeaders as $header) {
             $table2->addCell(1750, $styleCell)->addText($totals[$header] ?? '');
         }
 
-        // Second row Headers
         $table2->addRow();
         $table2->addCell(1750)->addText("", $boldFontStyle2);
         foreach ($mineralHeadersInRussian2 as $header) {
             $table2->addCell(1750, $styleCell)->addText($header, $boldFontStyle2);
         }
 
-        // Fill the second row's values (create third row)
         $table2->addRow();
         $table2->addCell(1750)->addText("");
         foreach ($mineralHeaders2 as $header) {
@@ -243,17 +218,14 @@ class TechnologicalCardGenerationService{
 
 
 
-        // Save the file
         $fileName = 'technological_card.docx';
         try {
-            // Your existing code to generate the document
             $phpWord->save($fileName, 'Word2007', true);
         } catch (\Exception $e) {
             Log::error("Error generating document: " . $e->getMessage());
             return response()->json(['error' => 'Failed to generate document'], 500);
         }
         
-        // Return the file
         return response()->download($fileName)->deleteFileAfterSend(true);
 
     }

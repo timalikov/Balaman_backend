@@ -128,7 +128,6 @@ class DishController extends Controller
 
             'nutrients' => 'sometimes|array',
 
-            // Validate the optional products array
             'products' => 'sometimes|array',
             'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
             'products.*.weight' => 'required_with:products|numeric',
