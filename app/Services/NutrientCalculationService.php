@@ -104,10 +104,10 @@ class NutrientCalculationService
         $coefficientProduct = 1;
 
         foreach($factorIds as $factorId){
-            $coefficient = \DB::table('weight_losses') // Use the table name directly
+            $coefficient = \DB::table('weight_losses') 
                             ->where('product_id', $productId)
                             ->where('factor_id', $factorId)
-                            ->value('coefficient'); // Assuming 'coefficient' is the column name
+                            ->value('coefficient'); 
 
             if ($coefficient !== null and $coefficient !== 0) {
                 $coefficientProduct *= $coefficient;
@@ -124,19 +124,16 @@ class NutrientCalculationService
                 $factorIds = $productData['factor_ids'];
                 $productId = $productData['product_id'];
 
-                // Iterate over each nutrient and apply the coefficient if available
                 foreach ($productData['nutrients'] as &$nutrient) {
                     $nutrientCoefficient = $this->getNutrientCoefficients($productId, $factorIds, $nutrient['nutrient_id']);
 
-                    // Check if a coefficient exists for the nutrient
                     if ($nutrientCoefficient !== null) {
                         $nutrient['pivot']['weight'] = round($nutrient['pivot']['weight'] * $nutrientCoefficient, 2);
                     }
-                    // If no coefficient, leave the nutrient value as is
                 }
             }
         }
-        unset($productData, $nutrient); // Unset reference to the last elements
+        unset($productData, $nutrient); 
 
         return $products;
     }
@@ -148,11 +145,11 @@ class NutrientCalculationService
     {
         $coefficientProduct = 1;
         foreach($factorIds as $factorId){
-            $coefficient = \DB::table('nutrient_losses_by_products') // Use the table name directly
+            $coefficient = \DB::table('nutrient_losses_by_products') 
                             ->where('product_id', $productCategoryId)
                             ->where('factor_id', $factorId)
                             ->where('nutrient_id', $nutrientId)
-                            ->value('coefficient'); // Assuming 'coefficient' is the column name
+                            ->value('coefficient'); 
 
             if ($coefficient !== null and $coefficient !== 0) {
                 $coefficientProduct *= $coefficient;

@@ -20,6 +20,12 @@ class WeightCalculationService
                 $weightCoefficient = $productData['weight'] / self::BASE_WEIGHT;
             }
 
+            if (!isset($productData['price_calculated']) or $productData['price_calculated'] == False){
+                $productData['price'] = $productData['price'] * $weightCoefficient;
+                $productData['price_calculated'] = True;
+            }
+            
+
     
             $productData['kilocalories'] = round($productData['kilocalories'] * $weightCoefficient, 2);
     

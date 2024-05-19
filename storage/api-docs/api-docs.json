@@ -142,6 +142,173 @@
                     }
                 }
             }
+        },
+        "/api/dishes": {
+            "post": {
+                "tags": [
+                    "Dishes"
+                ],
+                "summary": "Create a new dish",
+                "description": "Stores a new dish with optional related products and nutrient data.",
+                "operationId": "storeDish",
+                "requestBody": {
+                    "description": "Data for the new dish",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bls_code",
+                                    "name",
+                                    "dish_category_id"
+                                ],
+                                "properties": {
+                                    "bls_code": {
+                                        "type": "string",
+                                        "example": "BLS001"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Vegan Salad"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Delicious vegan salad.",
+                                        "nullable": true
+                                    },
+                                    "recipe_description": {
+                                        "type": "string",
+                                        "example": "Combine all ingredients.",
+                                        "nullable": true
+                                    },
+                                    "dish_category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "kilocalories": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 250,
+                                        "nullable": true
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 19.99,
+                                        "nullable": true
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "http://example.com/image.jpg",
+                                        "nullable": true
+                                    },
+                                    "health_factor": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 4,
+                                        "nullable": true
+                                    },
+                                    "nutrients": {
+                                        "description": "Optional nutrients data, must not be included if 'products' is present.",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "nutrient_id",
+                                                "weight"
+                                            ],
+                                            "properties": {
+                                                "nutrient_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "weight": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 100
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "products": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "weight"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 81
+                                                },
+                                                "weight": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 200
+                                                },
+                                                "factor_ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dish created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Vegan Salad"
+                                        },
+                                        "price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 19.99
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation error details here"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
