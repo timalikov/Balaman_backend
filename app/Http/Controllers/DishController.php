@@ -160,6 +160,7 @@ class DishController extends Controller
         $validatedData = $validator->validated();
         
         if ($request->has('products')) {
+            $validatedData['has_relation_with_products'] = true;
             return $this->handleProductRelatedDish($validatedData, $request);
         } else {
             return $this->handleSimpleDish($validatedData, $request);

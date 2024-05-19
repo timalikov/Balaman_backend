@@ -185,7 +185,11 @@ class DishNutrientCalculationController extends Controller
                 foreach ($dish->products as $product) {
                     $nutrientsJson = $product['pivot']['nutrients'];
                     $nutrients = json_decode($nutrientsJson);
+
+                    Log::info("Nutrientsss");
+                    Log::info($nutrientsJson);
                     
+
                     foreach ($nutrients as $nutrient) {
                         $nutrientKey = $nutrient->name;
                         $weight = $nutrient->pivot->weight;
