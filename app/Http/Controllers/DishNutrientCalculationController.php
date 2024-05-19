@@ -35,11 +35,11 @@ class DishNutrientCalculationController extends Controller
         try {
             $validatedData = $request->validate([
                 'dishes' => 'sometimes|array',
-                'dishes.*' => 'required_with:dishes|exists:dishes,dish_id',
+                'dishes.*' => 'exists:dishes,dish_id',
                 'products' => 'nullable|array',
-                'products.*.product_id' => 'required_with:products|exists:products,product_id',
-                'products.*.weight' => 'required_with:products|numeric',
-                'products.*.factor_ids' => 'sometimes:products|array',
+                'products.*.product_id' => 'exists:products,product_id',
+                'products.*.weight' => 'numeric',
+                'products.*.factor_ids' => 'array',
             ]);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -171,26 +171,33 @@ class DishNutrientCalculationController extends Controller
         $nutrientMap = [];
         $nutrientNames = config('nutrients.nutrient_names');
         $nutrientMeasurements = config('nutrients.nutrient_mesurement_units');
+
+        foreach ($nutrientNames as $name){
+            $nutrientMap[$name] = [
+                'name' => $name,
+                'weight' => 0,
+                'measurement_unit' => $nutrientMeasurements[$name] ?? 'g',
+            ];
+        }
         
         foreach ($dishes as $dish) {
             if ($dish->has_relation_with_products) {
                 foreach ($dish->products as $product) {
-                    foreach ($product->nutrients as $nutrient) {
+                    $nutrientsJson = $product['pivot']['nutrients'];
+                    $nutrients = json_decode($nutrientsJson);
+                    
+                    foreach ($nutrients as $nutrient) {
                         $nutrientKey = $nutrient->name;
                         $weight = $nutrient->pivot->weight;
+
                         if ($nutrientKey === 'protein' || $nutrientKey === 'fat' || $nutrientKey === 'carbohydrate') {
                             continue;
                         }
-                        if (in_array($nutrientKey, $nutrientNames)) {
-                            if (!isset($nutrientMap[$nutrientKey])) {
-                                $nutrientMap[$nutrientKey] = [
-                                    'name' => $nutrientKey,
-                                    'weight' => 0,
-                                    'measurement_unit' => $nutrientMeasurements[$nutrientKey] ?? 'g',
-                                ];
-                            }
+                        
+                        if (isset($nutrientMap[$nutrientKey])) {
                             $nutrientMap[$nutrientKey]['weight'] += $weight;
                         }
+                        
                     }
                 }
             }
@@ -215,7 +222,6 @@ class DishNutrientCalculationController extends Controller
     
                 }
             }
-            
         }
 
         // Convert to a numerically indexed array
