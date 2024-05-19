@@ -171,6 +171,7 @@ class DishController extends Controller
         return Validator::make($request->all(), [
             'bls_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
+            'weight' => 'nullable|numeric',
             'description' => 'nullable|string',
             'recipe_description' => 'nullable|string',
             'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
@@ -180,9 +181,9 @@ class DishController extends Controller
             'health_factor' => 'nullable|numeric',
             'nutrients' => 'sometimes|array',
             'products' => 'sometimes|array',
-            'products.*.product_id' => 'required_with:products|integer|exists:products,product_id',
-            'products.*.weight' => 'required_with:products|numeric',
-            'products.*.factor_ids' => 'sometimes:products|array',
+            'products.*.product_id' => 'integer|exists:products,product_id',
+            'products.*.weight' => 'numeric',
+            'products.*.factor_ids' => 'array',
         ]);
     }
 
@@ -241,8 +242,6 @@ class DishController extends Controller
         $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
-
-        Log::info('Nutrient loss after thermal processing', $nutrientLossAfterThermalProcessing);
         
         foreach ($nutrientLossAfterThermalProcessing as $product) {
             $totalPrice += $product['price'];
