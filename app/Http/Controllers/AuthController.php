@@ -162,6 +162,8 @@ class AuthController extends Controller
         
         $tokenResult = app()->handle($tokenRequest);
 
+        Log::info("OAuth token request: " . $tokenRequest->getContent() . " Response: " . $tokenResult->getContent() . " Status Code: " . $tokenResult->getStatusCode());
+
         $responseContent = json_decode($tokenResult->getContent(), true);
 
         $statusCode = $tokenResult->getStatusCode();

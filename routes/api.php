@@ -4,13 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DishController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\NutrientCalculationController;
 use App\Http\Controllers\TechnologicalCardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FactorController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\DishCategoryController;
-use App\Http\Controllers\WeightCalculationController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DishNutrientCalculationController;
@@ -44,26 +42,19 @@ Route::group(
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
-       
     }
 );
 
 // Public routes
-Route::get('/products', [ProductController::class, 'index']); // List all products
-Route::middleware('role:admin')->get('/products/{product}', [ProductController::class, 'show']); // Show a single product
-// ... other routes
-
-// Protected routes
-Route::middleware('permission:all')->post('/products', [ProductController::class, 'store']);
-
-// Route::post('/products', [ProductController::class, 'store'])->middleware('api','checkRolePermission:create');
-Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('jwt.verify', 'checkRolePermission:update');
-Route::delete('/products/{product}', [ProductController::class, 'delete'])->middleware('jwt.verify', 'checkRolePermission:destroy');
-
 Route::apiResource(
     'products',
     ProductController::class
 );
+Route::middleware('role:admin')->get('/products/{product}', [ProductController::class, 'show']); 
+// Route::post('/products', [ProductController::class, 'store'])->middleware('api','checkRolePermission:create');
+// Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('jwt.verify', 'checkRolePermission:update');
+// Route::delete('/products/{product}', [ProductController::class, 'delete'])->middleware('jwt.verify', 'checkRolePermission:destroy');
+
 
 Route::apiResource(
     'dishes',
@@ -90,14 +81,7 @@ Route::apiResource(
     DishCategoryController::class
 );
 
-Route::post('/calculate-total-nutrients', [NutrientCalculationController::class, 'calculateTotalNutrients']);
-Route::post('/nutrient-details', [NutrientCalculationController::class, 'calculateProductNutrientDetails']);
-
-// generate-technological-card
 Route::post('/generate-technological-card', [TechnologicalCardController::class, 'generate']);
-
-Route::post('/calculate-weight', [WeightCalculationController::class, 'process']);
-
 
 Route::delete('/menus/remove-dish', [MenuController::class, 'removeDishFromMenu']);
 

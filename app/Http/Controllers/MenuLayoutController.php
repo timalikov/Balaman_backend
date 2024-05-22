@@ -7,7 +7,6 @@ use App\Services\MenuLayoutGenerationService;
 
 class MenuLayoutController extends Controller
 {
-    //
     protected $menuLayoutGenerationService;
 
     public function __construct(

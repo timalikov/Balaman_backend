@@ -10,7 +10,6 @@ use App\Services\TechnologicalCardGenerationService;
 
 class TechnologicalCardController extends Controller
 {
-    //
     protected $nutrientCalculationService;
     protected $weightCalculationService;
     protected $productFetchService;
@@ -34,7 +33,6 @@ class TechnologicalCardController extends Controller
         $requestData = $request->input('products');
         $products = $this->productFetchService->completeProductRequest($requestData);     
 
-        // Validate that products is not null and is an array
         if (is_null($products) || !is_array($products)) {
             return response()->json(['error' => 'Invalid products data'], 400);
         }
@@ -47,7 +45,6 @@ class TechnologicalCardController extends Controller
 
         $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
 
-        // Calculate nutrients for the products
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
 
         $name = $request->input('name');

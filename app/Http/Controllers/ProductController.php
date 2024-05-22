@@ -9,12 +9,8 @@ use App\Http\Resources\DishResource;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        // Validate the request
         $request->validate([
             'search' => 'string|nullable',
             'product_id' => 'integer|nullable',
@@ -23,7 +19,6 @@ class ProductController extends Controller
             'page' => 'integer|nullable'
         ]);
 
-        // Check for specific product ID search
         if ($request->has('product_id')) {
             return $this->show($request->input('product_id'));
         }
@@ -32,16 +27,15 @@ class ProductController extends Controller
                 'productCategory' => function($query) {
                     $query->select('product_category_id', 'name');
                 },
-                'factors' => function($query) { // Include factors relationship
-                    $query->select('factors.factor_id'); // Select only factor_id
+                'factors' => function($query) {
+                    $query->select('factors.factor_id'); 
                 }
             ])
             ->select(['product_id', 'bls_code', 'name', 'description', 'product_category_id']);
 
-        // Handle the general search parameter
         if ($request->has('search')) {
             $searchTerm = strtolower($request->input('search'));
-            $searchTerm = str_replace(' ', '', $searchTerm); // Remove spaces from the search term
+            $searchTerm = str_replace(' ', '', $searchTerm); 
 
             $query->where(function ($q) use ($searchTerm) {
                 $q->whereRaw('REPLACE(LOWER(name), \' \', \'\') LIKE ?', ['%' . $searchTerm . '%'])
@@ -52,27 +46,20 @@ class ProductController extends Controller
             });
         }
 
-        // Filter by product_category_id if provided
         if ($request->has('product_category_id')) {
             $query->whereHas('productCategory', function ($q) use ($request) {
                 $q->where('product_category_id', $request->input('product_category_id'));
             });
         }
 
-
-        // Finalize the query with pagination
         $perPage = $request->input('per_page', 10);
         $currentPage = $request->input('page', 1);
         $products = $query->paginate($perPage, ['*'], 'page', $currentPage);
 
-        // Prepare the data to include factors and factor_ids
         $modifiedData = $products->getCollection()->map(function ($product) {
-            // Extract only factor_ids from the factors relationship
             $factorIds = $product->factors->pluck('factor_id');
-            // Assign the extracted factor_ids to the product
             $product->factor_ids = $factorIds;
-            // Remove the factors attribute from the product to not include it in the response
-            unset($product->factors); // This line ensures the factors array is removed from the return data
+            unset($product->factors); 
             return $product;
         });
         
@@ -86,22 +73,8 @@ class ProductController extends Controller
         ]);
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // Validate the incoming request data
         $validatedData = $request->validate([
             'bls_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
@@ -113,86 +86,44 @@ class ProductController extends Controller
             'fat' => 'required|numeric',
             'carbohydrate' => 'required|numeric',
             'fiber' => 'nullable|numeric',
-            'total_sugar' => 'nullable|numeric',
-            'saturated_fat' => 'nullable|numeric',
-            'kilocaries' => 'required|numeric',
-            'kilocaries_with_fiber' => 'nullable|numeric',
+            'kilocalories' => 'required|numeric',
             'image_url' => 'nullable|url',
-            'is_seasonal' => 'nullable|boolean',
         ]);
 
-        // Create the product
         $product = Product::create($validatedData);
 
-        // Return a response, e.g., the created product or a success message
         return response()->json($product, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(int $id)
     {
-        // Fetch the product by its ID along with related data
         $product = Product::with([
-            // Include the micronutrients ('nutrients') associated with the product
             'nutrients' => function ($query) {
-                // Ensure to fetch the weight from the pivot table for each nutrient
                 $query->whereIn('name', config('nutrients.nutrient_names'))
                       ->withPivot('weight');
             }, 
     
-            // Include the product's category
             'productCategory' => function ($query) {
-                // Select only the necessary fields from the productCategory table
-                // Adjust the field names if they are different in your database
-                $query->select('product_category_id', 'name'); // Ensure correct field names are used here
+                $query->select('product_category_id', 'name'); 
             },
     
-            // Include dishes where the product is used
             'dishes' => function ($query) {
                 $query->select('dishes.dish_id', 'dishes.name');
             }
 
         ])
-        // Filter the product by its unique ID
-        ->where('product_id', $id) // Make sure the column name matches your schema
-        // Fetch the first product that matches the criteria or fail
+        ->where('product_id', $id)
         ->firstOrFail();
     
         $product->dishes->transform(function ($dish) {
             return collect($dish->toArray())->except(['pivot']);
         });
 
-        // Return the product data as a JSON response
         return response()->json($product);
     }
-    
-    
 
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(int $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, int $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(int $id)
     {
-        //
         $product = Product::findOrFail($id);
         $product->delete();
 

@@ -81,6 +81,7 @@ class DishController extends Controller
             'data' => $dishes->items()
         ]);
     }
+    
 
     const NUTRIENT_IDS = ['protein' => 2, 'fat' => 3, 'carbohydrate' => 4];
     /**
@@ -225,7 +226,6 @@ class DishController extends Controller
         $totalCarbohydrate = 0;
         $productsData = [];
 
-        // product processing logic
         $validatedData['has_relation_with_products'] = true;
 
         $products = $this->productFetchService->completeProductRequest($products);
@@ -351,40 +351,18 @@ class DishController extends Controller
     }
     
 
-
-
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Dish $dish)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Dish $dish)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Dish $dish)
     {
         DB::beginTransaction();
         try {
-            $dish->products()->detach(); // Detach the related products assuming a many-to-many relationship
-            $dish->delete(); // Delete the dish
-            DB::commit(); // Commit the transaction
-            return response()->json(null, 204); // Return a 204 No Content response
+            $dish->products()->detach(); 
+            $dish->nutrients()->detach();
+            $dish->delete(); 
+            DB::commit(); 
+            return response()->json(null, 204);
         } catch (\Exception $e) {
-            DB::rollBack(); // Roll back the transaction in case of an error
-            return response()->json(['error' => $e->getMessage()], 500); // Return a 500 Internal Server Error response
+            DB::rollBack(); 
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
