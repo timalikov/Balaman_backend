@@ -169,7 +169,9 @@ class AuthController extends Controller
         $statusCode = $tokenResult->getStatusCode();
 
         if ($statusCode == 200) {
-            $user = User::where('email', $request->input('email'))->first();
+            $user = User::with('roles:id,name')->where('email', $request->input('email'))->first();
+
+            $role = $user->roles->first();  
 
             $customResponse = [
                 'tokens' => [
@@ -178,10 +180,13 @@ class AuthController extends Controller
                 ],
                 'user' => [
                     'id' => $user->id,
-                    'displayName' => $user->name, 
+                    'name' => $user->name, 
                     'email' => $user->email,
-                    'photoURL' => $user->photo_url, 
-                    'role' => $user->roles, 
+                    'photo_url' => $user->photo_url, 
+                    'role' => [
+                        'id' => $role->id,  
+                        'name' => $role->name,
+                    ],
                 ],
             ];
 

@@ -15,19 +15,15 @@ class ProductsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks to avoid constraint violations
         Schema::disableForeignKeyConstraints();
-        // Truncate the table
         DB::table('products')->truncate(); 
-        // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
         
 
-        // Load the CSV document from a file path
         $csv = Reader::createFromPath(storage_path('app/database_data/products_upd.csv'), 'r');
-        $csv->setHeaderOffset(0); // Set the CSV header offset
+        $csv->setHeaderOffset(0); 
 
-        $records = $csv->getRecords(); // Get all the records
+        $records = $csv->getRecords(); 
 
         foreach ($records as $record) {
             DB::table('products')->insert([

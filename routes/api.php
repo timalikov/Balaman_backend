@@ -14,6 +14,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DishNutrientCalculationController;
 use App\Http\Controllers\NutritionCalculatorController;
 use App\Http\Controllers\MenuLayoutController;
+use App\Http\Controllers\AdminController;
 
 
 /*
@@ -109,3 +110,19 @@ Route::post('/calculate-average-daily-nutrition', [MenuController::class, 'calcu
 
 // generate menu layout 
 Route::post('/generate-menu-layout', [MenuLayoutController::class, 'generate']);
+
+// Prod
+// Route::middleware('role:admin')->group(function () {
+//     Route::get('admin/users', [AdminController::class, 'index'])->name('admin.users.index');
+//     Route::get('admin/users/{user}/roles', [AdminController::class, 'showRoles'])->name('admin.users.roles');
+//     Route::post('admin/users/{user}/assign-role', [AdminController::class, 'assignRole'])->name('admin.assign.role');
+//     Route::post('admin/users/{user}/remove-role', [AdminController::class, 'removeRole'])->name('admin.remove.role');
+// });
+
+//Test
+Route::middleware('api')->group(function () {
+    Route::get('admin/users', [AdminController::class, 'index'])->name('admin.users.index');
+    Route::get('admin/users/roles', [AdminController::class, 'showRoles'])->name('admin.users.roles');
+    Route::post('admin/users/{user}/assign-role', [AdminController::class, 'assignRole'])->name('admin.assign.role');
+    Route::post('admin/users/{user}/remove-role', [AdminController::class, 'removeRole'])->name('admin.remove.role');
+});

@@ -30,6 +30,68 @@ class DishController extends Controller
 
     }
 
+    /**
+     * @OA\Get(
+     *     path="/dishes",
+     *     operationId="listDishes",
+     *     tags={"Dishes"},
+     *     summary="List all dishes",
+     *     description="Retrieves a list of dishes with optional filtering.",
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term for dish name or description",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="dish_id",
+     *         in="query",
+     *         description="Filter by a specific dish ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="dish_category_id",
+     *         in="query",
+     *         description="Filter by a specific dish category ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of dishes per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="items_per_page", type="integer"),
+     *             @OA\Property(property="total_items", type="integer"),
+     *             @OA\Property(property="total_pages", type="integer"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Dish")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
     public function index(Request $request)
     {
         $request->validate([
@@ -313,6 +375,29 @@ class DishController extends Controller
     }
    
 
+    /**
+     * @OA\Get(
+     *     path="/dishes/{id}",
+     *     operationId="showDish",
+     *     tags={"Dishes"},
+     *     summary="Get a specific dish",
+     *     description="Retrieves a specific dish by its ID, including related data.",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Dish ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Dish")
+     *     ),
+     *     @OA\Response(response=404, description="Dish not found"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
     public function show(int $id)
     {
         $dish = Dish::findOrFail($id);
@@ -351,6 +436,29 @@ class DishController extends Controller
     }
     
 
+    /**
+     * @OA\Delete(
+     *     path="/dishes/{id}",
+     *     operationId="deleteDish",
+     *     tags={"Dishes"},
+     *     summary="Delete a dish",
+     *     description="Deletes a specific dish by its ID.",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Dish ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Dish deleted successfully"
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=404, description="Dish not found"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
     public function destroy(Dish $dish)
     {
         DB::beginTransaction();

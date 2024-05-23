@@ -45,12 +45,6 @@ class MenuController extends Controller
 //     $this->middleware('auth:api');
     }
 
-
-    // public function __construct()
-    // {
-
-    // }
-
     /**
      * Display a listing of all menus.
      */
@@ -105,19 +99,19 @@ class MenuController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'weeks' => 'required|array|min:1', 
+            'weeks' => 'required|array', 
         
             'weeks.*.week_number' => 'required|integer|between:1,52',  
-            'weeks.*.days' => 'required|array|min:1',  
+            'weeks.*.days' => 'required|array',  
         
             'weeks.*.days.*.day_number' => 'required|integer|between:1,7',  
-            'weeks.*.days.*.meal_times' => 'required|array|min:1',  
+            'weeks.*.days.*.meal_times' => 'required|array',  
             
         
             'weeks.*.days.*.meal_times.*.meal_time_number' => 'required|integer',
             'weeks.*.days.*.meal_times.*.meal_time_name' => 'required|string',  
-            'weeks.*.days.*.meal_times.*.dishes' => 'required|array|min:1', 
-            'weeks.*.days.*.meal_times.*.products' => 'sometimes|array|min:1', 
+            'weeks.*.days.*.meal_times.*.dishes' => 'required|array', 
+            'weeks.*.days.*.meal_times.*.products' => 'sometimes|array', 
 
             'weeks.*.days.*.meal_times.*.dishes.*.dish_id' => 'sometimes|required_without:product_id|integer|exists:dishes,dish_id',
             'weeks.*.days.*.meal_times.*.products.*.product_id' => 'sometimes|required_without:dish_id|integer|exists:products,product_id',
