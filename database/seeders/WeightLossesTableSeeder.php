@@ -24,7 +24,7 @@ class WeightLossesTableSeeder extends Seeder
         // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
-        $csvDirectory = storage_path('app/database_data/factors/csv_data');
+        $csvDirectory = storage_path('app/db_unicef/factors/csv_data');
         $csvFiles = glob($csvDirectory . '/*.csv');
 
         $insertedRecords = [];

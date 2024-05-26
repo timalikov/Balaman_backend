@@ -20,7 +20,7 @@ class ProductsTableSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
         
 
-        $csv = Reader::createFromPath(storage_path('app/database_data/products_upd.csv'), 'r');
+        $csv = Reader::createFromPath(storage_path('app/db_unicef/products_upd.csv'), 'r');
         $csv->setHeaderOffset(0); 
 
         $records = $csv->getRecords(); 

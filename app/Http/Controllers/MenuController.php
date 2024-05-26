@@ -422,12 +422,15 @@ class MenuController extends Controller
                 ksort($mealTimes); 
                 $mealTimes = array_values($mealTimes);  
                 $sortedDays[] = [
-                    'day' => $day,  
+                    'day_number' => $day,  
                     'meal_times' => $mealTimes
                 ];  
             }
 
-            $sortedWeeks[] = ['days' => $sortedDays]; 
+            $sortedWeeks[] = [
+                'week_number' => $week,
+                'days' => $sortedDays
+            ]; 
         }
 
         return $sortedWeeks;  

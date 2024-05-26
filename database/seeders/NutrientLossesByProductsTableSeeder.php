@@ -26,7 +26,7 @@ class NutrientLossesByProductsTableSeeder extends Seeder
         // Enable foreign key checks
         Schema::enableForeignKeyConstraints();
 
-        $csvDirectory = storage_path('app/database_data/factors/nutrient_losses/csv_data');
+        $csvDirectory = storage_path('app/db_unicef/factors/nutrient_losses/csv_data');
         $csvFiles = glob($csvDirectory . '/*.csv');
         
         if (empty($csvFiles)) {
