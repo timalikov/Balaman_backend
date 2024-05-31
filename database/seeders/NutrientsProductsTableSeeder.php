@@ -19,7 +19,7 @@ class NutrientsProductsTableSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         for ($productId = 1; $productId <= 696; $productId++) {
-            $filePath = storage_path("app/db_unicef/nutrients/csv_data/$productId.csv");
+            $filePath = storage_path("app/database_data/nutrients/csv_data/$productId.csv");
 
             if (!file_exists($filePath)) {
                 continue;  // Skip if file does not exist
