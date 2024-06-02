@@ -380,29 +380,28 @@ class MenuController extends Controller
             foreach ($menuMealTime->mealDishes as $dish) {
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['dishes'][] = [
                     'dish_id' => $dish->dish_id,
-                    'name' => $dish->name,
+                    'dish_name' => $dish->name,
                 ];
             }
 
             $menuMealTime->load('productFactors');
-            
+            // Build a mapping of product IDs to factor IDs
+            // $productFactorsMap = [];
+            // foreach ($menuMealTime->productFactors as $product) {
+            //     $productFactorsMap[$product->product_id] = json_decode($product->pivot->factor_ids);
+            // }
+
+            Log::info($menuMealTime->productFactors);
+
             foreach ($menuMealTime->mealProducts as $product) {
-                // $productDetails = $menuMealTime->productFactors->where('product_id', $product->product_id)->first();
-                // $factorIds = $productDetails->pivot->factor_ids;
-
-                // Log::info("productFactorsgoi: " . json_encode($factorIds));
-
-
-                // Log::info("productFactorsgoi: " . $product->productDetails);
-                // Log::info("productFactorsgoi2: " . json_encode($factors));
-
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = [
                     'product_id' => $product->product_id,
                     'name' => $product->name,
                     'weight' => $product->pivot->weight,
-                    // 'factor_id' => $product->productDetails->pivot->factor_ids,  // Include the factor_id if available
+                    'factor_ids' => []
                 ];
             }
+            
         }
 
         return $this->sortWeeksAndDays($weeks);

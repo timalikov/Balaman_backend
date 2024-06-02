@@ -51,11 +51,11 @@ class Product extends Model
     public function nutrientLossesByProducts()
     {
         return $this->belongsToMany(
-            NutrientLossByProduct::class, // Related model
-            'nutrient_losses_by_products', // Pivot table
-            'product_id', // Foreign key on the pivot table for the Product model
-            'factor_id'  // Foreign key on the pivot table for the NutrientLossByProduct model
-        )->withPivot('coefficient'); // Additional columns from pivot table
+            NutrientLossByProduct::class, 
+            'nutrient_losses_by_products',
+            'product_id', 
+            'factor_id'  
+        )->withPivot('coefficient'); 
     }
 
 
