@@ -552,120 +552,91 @@ class MenuController extends Controller
 
         $nutrientNames = config('nutrients.nutrient_names');
         foreach ($nutrientNames as $name) {
-            $totals[$name] = 0;
+            if (!isset($totals[$name])) {
+                $totals[$name] = 0;
+            }
         }
 
         foreach ($mealTimes as $mealTime) {
             foreach ($mealTime['dishes'] as $dishData) {
-                $dish = Dish::with('products')->findOrFail($dishData['dish_id']);
-
-                if (isset($dishData['weight'])) {
-                    $weight = $dishData['weight'];
-                } else {
-                    $weight = $dish->weight;
+                $dish = Dish::with('products')->find($dishData['dish_id']);
+                if (!$dish) {
+                    continue; // Skip this dish if not found
                 }
 
+                $weight = $dishData['weight'] ?? $dish->weight;
                 $coefficient = $weight / $dish->weight;
 
                 $totals['weight'] += $weight;
-                $totals['kilocalories'] += (float) $dish->kilocalories * $coefficient;
-                $totals['protein'] += $dish->protein * $coefficient;
-                $totals['fat'] += $dish->fat * $coefficient;
-                $totals['carbohydrate'] += $dish->carbohydrate * $coefficient;
-
-
-                if ($dish->has_relation_with_products) {
-                    foreach ($dish->products as $product) {
-                        $nutrients = json_decode($product->pivot->nutrients, true);
-                    
-                        foreach ($nutrients as $nutrient) {
-                            $nutrientName = $nutrient['name']; 
-                            $nutrientWeight = $nutrient['pivot']['weight'] * $coefficient; 
-                    
-                            if (isset($totals[$nutrientName])) {
-                                $totals[$nutrientName] += $nutrientWeight;
-                            }
-                            
-                        }
-                    }
-                }else {
-                    $dish->load('nutrients');
-                    foreach ($dish->nutrients as $nutrient) {
-                        $nutrientName = $nutrient->name;
-                        $nutrientWeight = $nutrient->pivot->weight * $coefficient;
-    
-                            if (isset($totals[$nutrientName])) {
-                                $totals[$nutrientName] += $nutrientWeight;
-                            }
-                        
-                    }
+                foreach (['kilocalories', 'protein', 'fat', 'carbohydrate'] as $nutrient) {
+                    $totals[$nutrient] += (float) $dish->{$nutrient} * $coefficient;
                 }
-                
+
+                $this->accumulateNutrients($dish, $coefficient, $totals);
             }
 
             if (isset($mealTime['products'])) {
-                            
-                $products_json = json_encode($mealTime['products']);
-                $products_array = json_decode($products_json, true);
-
-                $products = $this->productFetchService->completeProductRequest($products_array);
-
-                if (is_null($products) || !is_array($products)) {
-                    return response()->json(['error' => 'Invalid products data'], 400);
-                }
-
-                $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
-
-                $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
-
-                $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
-
-                $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
-
-                $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
-
-                foreach ($nutrientLossAfterThermalProcessing as $productData) {
-
-                    $totals['weight'] += $productData['weight'];
-                    $totals['kilocalories'] += $productData['kilocalories'];
-
-                    $nutrientNames = config('nutrients.nutrient_names');
-
-                    foreach ($nutrientNames as $name) {
-                        if ($name == 'protein' || $name == 'fat' || $name == 'carbohydrate'){
-                            continue;
-                        }
-
-                        $totals[$name] = 0;
-                    }
-                    
-                    foreach ($productData['nutrients'] as $nutrient){
-                        $nutrientName = $nutrient['name'];
-                        $nutrientWeight = $nutrient['pivot']['weight'];
-
-                        if ($nutrientName === 'protein'){
-                            $totals['protein'] += $nutrientWeight;
-                        }elseif ($nutrientName === 'fat'){
-                            $totals['fat'] += $nutrientWeight;
-                        }elseif ($nutrientName === 'carbohydrate'){
-                            $totals['carbohydrate'] += $nutrientWeight;
-                        }
-
-                        if (in_array($nutrientName, $nutrientNames)) {
-                            if (!isset($totals[$nutrientName])) {
-                                $totals[$nutrientName] = 0;
-                            }
-                            $totals[$nutrientName] += $nutrientWeight;
-                        }
-
-                    }
-                }
-            
+                $this->processProducts($mealTime['products'], $totals);
             }
         }
 
         return $totals;
     }
+
+    protected function accumulateNutrients($dish, $coefficient, &$totals)
+    {
+        if ($dish->has_relation_with_products) {
+            foreach ($dish->products as $product) {
+                $nutrients = json_decode($product->pivot->nutrients, true);
+                foreach ($nutrients as $nutrient) {
+                    $nutrientName = $nutrient['name'];
+                    $nutrientWeight = $nutrient['pivot']['weight'] * $coefficient;
+                    if (isset($totals[$nutrientName])) {
+                        $totals[$nutrientName] += $nutrientWeight;
+                    }
+                }
+            }
+        } else {
+            $dish->load('nutrients');
+            foreach ($dish->nutrients as $nutrient) {
+                $nutrientName = $nutrient->name;
+                $nutrientWeight = $nutrient->pivot->weight * $coefficient;
+                if (isset($totals[$nutrientName])) {
+                    $totals[$nutrientName] += $nutrientWeight;
+                }
+            }
+        }
+    }
+
+    protected function processProducts($productsData, &$totals)
+    {
+        $products = $this->productFetchService->completeProductRequest($productsData);
+
+        if (is_null($products) || !is_array($products)) {
+            return response()->json(['error' => 'Invalid products data'], 400);
+        }
+
+        $customWeightAdjustedProducts = $this->weightCalculationService->calculateNutrientsForCustomWeight($products);
+
+        $weightLossAfterColdProcessing = $this->nutrientCalculationService->calculateWeightForColdProcessing($customWeightAdjustedProducts);
+
+        $customWeightAdjustedAfterColdProcessing = $this->weightCalculationService->calculateNutrientsForCustomWeightAfterColdProcessing($weightLossAfterColdProcessing);
+
+        $weightLossAfterThermalProcessing = $this->nutrientCalculationService->calculateWeightForThermalProcessing($customWeightAdjustedAfterColdProcessing);
+
+        $productsProcessed = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
+
+        foreach ($productsProcessed as $productData) {
+            $totals['weight'] += $productData['weight'];
+            $totals['kilocalories'] += $productData['kilocalories'];
+            foreach ($productData['nutrients'] as $nutrient) {
+                $nutrientName = $nutrient['name'];
+                $nutrientWeight = $nutrient['pivot']['weight'];
+                $totals[$nutrientName] = ($totals[$nutrientName] ?? 0) + $nutrientWeight;
+            }
+        }
+    }
+
 
     protected function calculateAverageDailyNutrition($nutritionTotals, $totalDays)
     {

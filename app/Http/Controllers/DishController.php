@@ -238,7 +238,7 @@ class DishController extends Controller
             'weight' => 'nullable|numeric',
             'description' => 'nullable|string',
             'recipe_description' => 'nullable|string',
-            'dish_category_id' => 'required|integer|exists:dish_categories,dish_category_id',
+            'dish_category_id' => 'sometimes|integer|exists:dish_categories,dish_category_id',
             'kilocalories' => 'sometimes|numeric',
             'protein' => 'sometimes|numeric',
             'fat' => 'sometimes|numeric',
