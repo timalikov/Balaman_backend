@@ -550,6 +550,10 @@ class MenuController extends Controller
             'carbohydrate' => 0,
         ];
 
+        $nutrientNames = config('nutrients.nutrient_names');
+        foreach ($nutrientNames as $name) {
+            $totals[$name] = 0;
+        }
 
         foreach ($mealTimes as $mealTime) {
             foreach ($mealTime['dishes'] as $dishData) {
@@ -569,39 +573,31 @@ class MenuController extends Controller
                 $totals['fat'] += $dish->fat * $coefficient;
                 $totals['carbohydrate'] += $dish->carbohydrate * $coefficient;
 
-                $nutrientNames = config('nutrients.nutrient_names');
-
-                foreach ($nutrientNames as $name) {
-                    $totals[$name] = 0;
-                }
 
                 if ($dish->has_relation_with_products) {
                     foreach ($dish->products as $product) {
-                        $nutrients = json_decode($product->pivot->nutrients, true); 
+                        $nutrients = json_decode($product->pivot->nutrients, true);
                     
                         foreach ($nutrients as $nutrient) {
                             $nutrientName = $nutrient['name']; 
                             $nutrientWeight = $nutrient['pivot']['weight'] * $coefficient; 
                     
-                            if (in_array($nutrientName, $nutrientNames)) {
-                                if (!isset($totals[$nutrientName])) {
-                                    $totals[$nutrientName] = 0; 
-                                }
-                                $totals[$nutrientName] += $nutrientWeight; 
+                            if (isset($totals[$nutrientName])) {
+                                $totals[$nutrientName] += $nutrientWeight;
                             }
+                            
                         }
                     }
                 }else {
+                    $dish->load('nutrients');
                     foreach ($dish->nutrients as $nutrient) {
                         $nutrientName = $nutrient->name;
                         $nutrientWeight = $nutrient->pivot->weight * $coefficient;
     
-                        if (in_array($nutrientName, $nutrientNames)) {
-                            if (!isset($totals[$nutrientName])) {
-                                $totals[$nutrientName] = 0;
+                            if (isset($totals[$nutrientName])) {
+                                $totals[$nutrientName] += $nutrientWeight;
                             }
-                            $totals[$nutrientName] += $nutrientWeight;
-                        }
+                        
                     }
                 }
                 
