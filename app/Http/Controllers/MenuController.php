@@ -566,11 +566,17 @@ class MenuController extends Controller
                 }
 
                 $weight = $dishData['weight'] ?? $dish->weight;
-                $coefficient = $weight / $dish->weight;
+                if ($weight < $dish->weight) {
+                    $coefficient = $weight / $dish->weight;
+                }else{
+                    $coefficient = $dish->weight / $weight;
+                }
 
                 $totals['weight'] += $weight;
                 foreach (['kilocalories', 'protein', 'fat', 'carbohydrate'] as $nutrient) {
                     $totals[$nutrient] += (float) $dish->{$nutrient} * $coefficient;
+                    Log::info("totlas: " );
+                    Log::info($totals[$nutrient]);
                 }
 
                 $this->accumulateNutrients($dish, $coefficient, $totals);
@@ -593,6 +599,9 @@ class MenuController extends Controller
                     $nutrientName = $nutrient['name'];
                     $nutrientWeight = $nutrient['pivot']['weight'] * $coefficient;
                     if (isset($totals[$nutrientName])) {
+                        if (in_array($nutrientName, ["protein", "fat", "carbohydrate"])) {
+                            continue; 
+                        }                        
                         $totals[$nutrientName] += $nutrientWeight;
                     }
                 }

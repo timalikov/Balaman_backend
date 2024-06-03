@@ -309,27 +309,41 @@ class DishController extends Controller
 
         $nutrientLossAfterThermalProcessing = $this->nutrientCalculationService->calculateNutrients($weightLossAfterThermalProcessing);
         
+        $totalPrice = 0;
+        $totalWeight = 0;
+        $totalKilocalories = 0;
+        $totalProtein = 0;
+        $totalFat = 0;
+        $totalCarbohydrate = 0;
+        $nutrientsTotals = [];
+
+        // Iterate over each product in the array
         foreach ($nutrientLossAfterThermalProcessing as $product) {
+            // Accumulate basic product attributes
             $totalPrice += $product['price'];
             $totalWeight += $product['weight'];
             $totalKilocalories += $product['kilocalories'];
-        
+
+            // Process each nutrient within the product
             foreach ($product['nutrients'] as $nutrient) {
+                // Check if the nutrient ID is not 2, 3, or 4
                 if (!in_array($nutrient['nutrient_id'], [2, 3, 4])) {
+                    // Accumulate weight for other nutrients
                     if (!isset($nutrientsTotals[$nutrient['nutrient_id']])) {
                         $nutrientsTotals[$nutrient['nutrient_id']] = 0;
                     }
-                    $nutrientsTotals[$nutrient["nutrient_id"]] += $nutrient["pivot"]['weight'];
+                    $nutrientsTotals[$nutrient['nutrient_id']] += $nutrient['pivot']['weight'];
                 } else {
+                    // Special handling for protein, fat, and carbohydrate
                     switch ($nutrient['nutrient_id']) {
                         case 2: 
-                            $totalProtein += $nutrient["pivot"]['weight'];
+                            $totalProtein += $nutrient['pivot']['weight'];
                             break;
                         case 3: 
-                            $totalFat += $nutrient["pivot"]['weight'];
+                            $totalFat += $nutrient['pivot']['weight'];
                             break;
                         case 4: 
-                            $totalCarbohydrate += $nutrient["pivot"]['weight'];
+                            $totalCarbohydrate += $nutrient['pivot']['weight'];
                             break;
                     }
                 }
