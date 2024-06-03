@@ -388,7 +388,7 @@ class MenuController extends Controller
             foreach ($menuMealTime->productFactors as $product) {
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = [
                     'product_id' => $product->product_id,
-                    'name' => $product->name,
+                    'product_name' => $product->name,
                     'weight' => $product->pivot->netto_weight,  // Assuming you want net weight from the pivot
                     'factor_ids' => json_decode($product->pivot->factor_ids),  // Assuming factor_ids are stored as JSON
                 ];
