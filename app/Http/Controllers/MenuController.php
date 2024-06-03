@@ -97,6 +97,7 @@ class MenuController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'user_id' => 'integer|nullable', 
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'weeks' => 'required|array', 
@@ -130,15 +131,15 @@ class MenuController extends Controller
         $validatedData['status'] = 'draft';
 
         // Extract user ID from JWT token
-        $userId = 1; // Replace with `Auth::id()` in production
-        $validatedData['user_id'] = $userId;
+        // $userId = 1; // Replace with `Auth::id()` in production
+        // $validatedData['user_id'] = $userId;
 
         DB::beginTransaction();
         try {
             $menu = Menu::create([
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
-                'user_id' => $userId,
+                'user_id' => $validatedData['user_id'],
                 'status' => $validatedData['status'],
             ]);
 
