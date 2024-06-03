@@ -12,5 +12,15 @@ class ProductForMenu extends Model
 
     protected $fillable = ['product_id', 'menu_meal_time_id', 'factor_ids', 'brutto_weight', 'netto_weight', 'nutrients'];
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function menuMealTime()
+    {
+        return $this->belongsTo(MenuMealTime::class, 'menu_meal_time_id');
+    }
+
     use HasFactory;
 }

@@ -385,20 +385,12 @@ class MenuController extends Controller
             }
 
             $menuMealTime->load('productFactors');
-            // Build a mapping of product IDs to factor IDs
-            // $productFactorsMap = [];
-            // foreach ($menuMealTime->productFactors as $product) {
-            //     $productFactorsMap[$product->product_id] = json_decode($product->pivot->factor_ids);
-            // }
-
-            Log::info($menuMealTime->productFactors);
-
-            foreach ($menuMealTime->mealProducts as $product) {
+            foreach ($menuMealTime->productFactors as $product) {
                 $weeks[$weekNumber][$dayNumber][$mealTimeNumber]['products'][] = [
                     'product_id' => $product->product_id,
                     'name' => $product->name,
-                    'weight' => $product->pivot->weight,
-                    'factor_ids' => []
+                    'weight' => $product->pivot->netto_weight,  // Assuming you want net weight from the pivot
+                    'factor_ids' => json_decode($product->pivot->factor_ids),  // Assuming factor_ids are stored as JSON
                 ];
             }
             

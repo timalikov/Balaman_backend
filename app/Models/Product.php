@@ -58,6 +58,12 @@ class Product extends Model
         )->withPivot('coefficient'); 
     }
 
+    public function menuMealTimes()
+    {
+        return $this->belongsToMany(MenuMealTime::class, 'products_for_menu', 'product_id', 'menu_meal_time_id')
+                    ->withPivot('additional_columns');
+    }
+
 
 
 }
